@@ -2,6 +2,10 @@ if ENABLE_IA_AIQ
 SUBDIRS = interface
 endif
 
+if ENABLE_RK_IQ
+SUBDIRS = interface
+endif
+
 plugin_LTLIBRARIES = \
     libgstrkisp.la \
     $(NULL)
@@ -18,6 +22,14 @@ MODULES_DIR = $(top_builddir)/modules
 XCORE_LA = $(top_builddir)/xcore/libxcam_core.la
 
 if ENABLE_IA_AIQ
+XCAM_INTERFACE_DIR = -I$(top_builddir)/wrapper/gstreamer/interface
+XCAM_INTERFACE_LA = $(top_builddir)/wrapper/gstreamer/interface/libgstxcaminterface.la
+else
+XCAM_INTERFACE_DIR =
+XCAM_INTERFACE_LA =
+endif
+
+if ENABLE_RK_IQ
 XCAM_INTERFACE_DIR = -I$(top_builddir)/wrapper/gstreamer/interface
 XCAM_INTERFACE_LA = $(top_builddir)/wrapper/gstreamer/interface/libgstxcaminterface.la
 else
@@ -80,6 +92,12 @@ libgstrkisp_la_LIBADD += $(ISP_LA)
 libgstrkisp_la_LDFLAGS += $(ISP_LA)
 endif
 
+if ENABLE_RK_IQ
+ISP_LA = $(top_builddir)/modules/rkisp/libxcam_rkisp.la
+libgstrkisp_la_LIBADD += $(ISP_LA)
+libgstrkisp_la_LDFLAGS += $(ISP_LA)
+endif
+
 if HAVE_LIBCL
 OCL_LA = $(top_builddir)/modules/ocl/libxcam_ocl.la
 
@@ -119,6 +137,15 @@ noinst_HEADERS = \
     $(NULL)
 
 if ENABLE_IA_AIQ
+noinst_HEADERS += \
+    gstxcambufferpool.h  \
+    gstxcambuffermeta.h  \
+    main_dev_manager.h   \
+    gstrkisp.h         \
+    $(NULL)
+endif
+
+if ENABLE_RK_IQ
 noinst_HEADERS += \
     gstxcambufferpool.h  \
     gstxcambuffermeta.h  \

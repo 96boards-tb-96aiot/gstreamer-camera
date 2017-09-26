@@ -193,7 +193,7 @@ if test "$enable_rkiq" = "yes"; then
 	RKISP_LIBS="-L\$(top_srcdir)/ext/rkisp/lib -lrkisp -lrkisp_3a_interface"
 	AC_SUBST(RKISP_CFLAGS)
     AC_SUBST(RKISP_LIBS)
-    LIBS="$LIBS $IA_IMAGING_LIBS"
+    LIBS="$LIBS $RKISP_LIBS"
 fi
 
 # check AIQ
@@ -350,7 +350,7 @@ AM_CONDITIONAL([ENABLE_CAPI], [test "$ENABLE_CAPI" -eq 1])
 #rkisp
 AC_DEFINE_UNQUOTED([HAVE_RK_IQ], $ENABLE_RK_IQ,
     [have rkisp binary])
-AM_CONDITIONAL([HAVE_RK_IQ], [test "$ENABLE_RK_IQ" -eq 1])
+AM_CONDITIONAL([ENABLE_RK_IQ], [test "$ENABLE_RK_IQ" -eq 1])
 
 #atomisp
 AM_CONDITIONAL([USE_LOCAL_ATOMISP], [test "$USE_LOCAL_ATOMISP" -eq 1])
@@ -365,6 +365,7 @@ AC_CONFIG_FILES([Makefile
                  xcore/Makefile
                  modules/Makefile
                  modules/isp/Makefile
+                 modules/rkisp/Makefile
                  wrapper/Makefile
                  wrapper/gstreamer/Makefile
                  wrapper/gstreamer/interface/Makefile

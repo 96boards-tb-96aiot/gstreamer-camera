@@ -46,6 +46,11 @@
 #include <isp/isp_image_processor.h>
 #include <isp/x3a_analyzer_aiq.h>
 #endif
+#if HAVE_RK_IQ
+#include <rkisp/rkisp_device.h>
+#include <rkisp/isp_controller.h>
+#include <rkisp/isp_image_processor.h>
+#endif
 #if HAVE_LIBCL
 #include <ocl/cl_3a_image_processor.h>
 #include <ocl/cl_post_image_processor.h>

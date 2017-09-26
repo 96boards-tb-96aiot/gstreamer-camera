@@ -40,6 +40,10 @@
 #include "x3a_analyze_tuner.h"
 #include "isp/isp_poll_thread.h"
 #endif
+#if HAVE_RK_IQ
+#include "gstxcaminterface.h"
+#include "isp/isp_poll_thread.h"
+#endif
 
 #include "fake_poll_thread.h"
 #include "fake_v4l2_device.h"
@@ -73,9 +77,13 @@ using namespace GstXCam;
 #define DEFAULT_PROP_PIXELFORMAT        V4L2_PIX_FMT_NV12 //420 instead of 0
 #define DEFAULT_PROP_FIELD              V4L2_FIELD_NONE // 0
 #define DEFAULT_PROP_ANALYZER           SIMPLE_ANALYZER
-//#if HAVE_IA_AIQ
+#if HAVE_IA_AIQ
 #define DEFAULT_PROP_IMAGE_PROCESSOR    ISP_IMAGE_PROCESSOR
-//#endif
+#endif
+
+#if HAVE_RK_IQ
+#define DEFAULT_PROP_IMAGE_PROCESSOR    ISP_IMAGE_PROCESSOR
+#endif
 
 #define DEFAULT_VIDEO_WIDTH             1920
 #define DEFAULT_VIDEO_HEIGHT            1080
@@ -154,6 +162,10 @@ gst_xcam_src_image_processor_get_type (void)
 #if HAVE_IA_AIQ
         {ISP_IMAGE_PROCESSOR, "ISP image processor", "isp"},
 #endif
+#if HAVE_RK_IQ
+        {ISP_IMAGE_PROCESSOR, "ISP image processor", "rkisp"},
+#endif
+
         {0, NULL, NULL},
     };
 
@@ -671,6 +683,10 @@ gst_xcam_src_start (GstBaseSrc *src)
     SmartPtr<ImageProcessor> isp_processor;
     SmartPtr<IspController> isp_controller;
 #endif
+#if HAVE_RK_IQ
+    SmartPtr<ImageProcessor> isp_processor;
+    SmartPtr<IspController> isp_controller;
+#endif
     SmartPtr<V4l2Device> capture_device;
     SmartPtr<V4l2Device> isp_device;
 
@@ -709,6 +725,12 @@ gst_xcam_src_start (GstBaseSrc *src)
         isp_device = new AtomispDevice (rkisp->isp_device);
     }
 #endif
+#if HAVE_RK_IQ
+    else {
+        capture_device = new RKispDevice (rkisp->device);
+        isp_device = new RKispDevice (rkisp->isp_device);
+    }
+#endif
 
     capture_device->set_sensor_id (rkisp->sensor_id);
     capture_device->set_capture_mode (rkisp->capture_mode);
@@ -727,9 +749,19 @@ gst_xcam_src_start (GstBaseSrc *src)
 #if HAVE_IA_AIQ
     isp_controller = new IspController (isp_device);
 #endif
+#if HAVE_RK_IQ
+    isp_controller = new IspController (isp_device);
+#endif
 
     switch (rkisp->image_processor_type) {
 #if HAVE_IA_AIQ
+    case ISP_IMAGE_PROCESSOR: {
+        isp_processor = new IspImageProcessor (isp_controller);
+        device_manager->add_image_processor (isp_processor);
+        break;
+    }
+#endif
+#if HAVE_RK_IQ
     case ISP_IMAGE_PROCESSOR: {
         isp_processor = new IspImageProcessor (isp_controller);
         device_manager->add_image_processor (isp_processor);
@@ -787,6 +819,14 @@ gst_xcam_src_start (GstBaseSrc *src)
         poll_thread = isp_poll_thread;
     }
 #endif
+#if HAVE_RK_IQ
+    else {
+        SmartPtr<IspPollThread> isp_poll_thread = new IspPollThread ();
+        isp_poll_thread->set_isp_controller (isp_controller);
+        poll_thread = isp_poll_thread;
+    }
+#endif
+
     device_manager->set_poll_thread (poll_thread);
 
     return TRUE;

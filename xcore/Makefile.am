@@ -60,7 +60,7 @@ xcam_sources += \
     $(NULL)
 endif
 
-if HAVE_RK_IQ
+if ENABLE_RK_IQ
 XCAM_CORE_CXXFLAGS += \
     $(RKISP_CFLAGS)  \
     $(NULL)
