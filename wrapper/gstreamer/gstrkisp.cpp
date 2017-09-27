@@ -1,7 +1,7 @@
 /*
  * gstrkisp.cpp - gst rkisp plugin
  *
- *  Copyright (c) 2015 Intel Corporation
+ *  Copyright (c) 2017 Rockchip Corporation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -289,7 +289,7 @@ gst_xcam_src_class_init (GstXCamSrcClass * class_self)
     basesrc_class = GST_BASE_SRC_CLASS (class_self);
     pushsrc_class = GST_PUSH_SRC_CLASS (class_self);
 
-    GST_DEBUG_CATEGORY_INIT (gst_xcam_src_debug, "rkisp", 0, "libXCam source plugin");
+    GST_DEBUG_CATEGORY_INIT (gst_xcam_src_debug, "rkisp", 0, "rkisp source plugin");
 
     gobject_class->finalize = gst_xcam_src_finalize;
     gobject_class->set_property = gst_xcam_src_set_property;
@@ -299,13 +299,13 @@ gst_xcam_src_class_init (GstXCamSrcClass * class_self)
         gobject_class, PROP_DEVICE,
         g_param_spec_string ("device", "device", "Device location",
                              NULL, (GParamFlags)(G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS)));
-
+/*
     g_object_class_install_property (
         gobject_class, PROP_SENSOR,
         g_param_spec_int ("sensor-id", "sensor id", "Sensor ID to select",
                           0, G_MAXINT, DEFAULT_PROP_SENSOR,
                           (GParamFlags)(G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS) ));
-
+*/
     g_object_class_install_property (
         gobject_class, PROP_MEM_MODE,
         g_param_spec_enum ("io-mode", "memory mode", "Memory mode",
@@ -344,17 +344,17 @@ gst_xcam_src_class_init (GstXCamSrcClass * class_self)
         g_param_spec_enum ("imageprocessor", "image processor", "Image Processor",
                            GST_TYPE_XCAM_SRC_IMAGE_PROCESSOR, DEFAULT_PROP_IMAGE_PROCESSOR,
                            (GParamFlags)(G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS)));
-
+/*
     g_object_class_install_property (
         gobject_class, PROP_3A_ANALYZER,
         g_param_spec_enum ("analyzer", "3a analyzer", "3A Analyzer",
                            GST_TYPE_XCAM_SRC_ANALYZER, DEFAULT_PROP_ANALYZER,
                            (GParamFlags)(G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS)));
-
+*/
     gst_element_class_set_details_simple (element_class,
-                                          "Libxcam Source",
+                                          "Gstreamer Plugin For Rockchip ISP Source",
                                           "Source/Base",
-                                          "Capture camera video using xcam library",
+                                          "Capture camera video with rockchip ISP support",
                                           "Jacob Chen <cc@rock-chips.com>");
 
     gst_element_class_add_pad_template (
@@ -1227,7 +1227,7 @@ gst_xcam_src_plugin_init (GstPlugin * rkisp)
 }
 
 #ifndef PACKAGE
-#define PACKAGE "libxam"
+#define PACKAGE "rkisp"
 #endif
 
 GST_PLUGIN_DEFINE (
