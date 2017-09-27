@@ -96,7 +96,7 @@ struct _GstXCamSrc
     char                        *device;
     char                        *isp_device;
 
-    char                        *path_to_cpf;
+    char                        *path_to_iqf;
     char                        *path_to_3alib;
     gboolean                     enable_3a;
     gboolean                     enable_usb;

@@ -78,6 +78,7 @@ public:
     bool set_smart_analyzer (SmartPtr<SmartAnalyzer> analyzer);
     bool add_image_processor (SmartPtr<ImageProcessor> processor);
     bool set_poll_thread (SmartPtr<PollThread> thread);
+    bool set_iq_path(const char* iq_file);
 
     SmartPtr<V4l2Device>& get_capture_device () {
         return _device;
@@ -147,6 +148,7 @@ protected:
     /* smart analysis */
     SmartPtr<SmartAnalyzer>         _smart_analyzer;
 
+	char _iq_file[512];
     void* _rkisp_engine;
 };
 

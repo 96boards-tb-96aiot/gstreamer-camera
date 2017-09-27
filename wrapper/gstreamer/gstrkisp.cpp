@@ -52,7 +52,7 @@ using namespace GstXCam;
 #define ISP_DEVICE_VIDEO    "/dev/video1"
 
 #if HAVE_RK_IQ
-#define DEFAULT_CPF_FILE_NAME  "/etc/cam_iq.xml"
+#define DEFAULT_IQ_FILE_NAME  "/etc/cam_iq.xml"
 #define DEFAULT_DYNAMIC_3A_LIB "/usr/local/lib/librkisp.so"
 #endif
 
@@ -193,8 +193,8 @@ enum {
     PROP_WDR_MODE,
     PROP_3A_ANALYZER,
     PROP_PIPE_PROFLE,
-    PROP_CPF,
 #if HAVE_RK_IQ
+    PROP_IQF,
     PROP_ENABLE_3A,
     PROP_3A_LIB,
 #endif
@@ -351,6 +351,12 @@ gst_xcam_src_class_init (GstXCamSrcClass * class_self)
                            GST_TYPE_XCAM_SRC_ANALYZER, DEFAULT_PROP_ANALYZER,
                            (GParamFlags)(G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS)));
 */
+#if HAVE_RK_IQ
+    g_object_class_install_property (
+        gobject_class, PROP_IQF,
+        g_param_spec_string ("path-iqf", "iqf", "Path to IQ file",
+                             NULL, (GParamFlags)(G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS)));
+#endif
     gst_element_class_set_details_simple (element_class,
                                           "Gstreamer Plugin For Rockchip ISP Source",
                                           "Source/Base",
@@ -386,6 +392,10 @@ gst_xcam_src_init (GstXCamSrc *rkisp)
     rkisp->capture_mode = V4L2_CAPTURE_MODE_VIDEO;
     rkisp->device = NULL;
     rkisp->enable_usb = DEFAULT_PROP_ENABLE_USB;
+
+#if HAVE_RK_IQ
+    rkisp->path_to_iqf = strndup(DEFAULT_IQ_FILE_NAME, XCAM_MAX_STR_SIZE);
+#endif
 
     rkisp->path_to_fake = NULL;
     rkisp->time_offset_ready = FALSE;
@@ -470,7 +480,11 @@ gst_xcam_src_get_property (
     case PROP_3A_ANALYZER:
         g_value_set_enum (value, src->analyzer_type);
         break;
-
+#if HAVE_RK_IQ
+    case PROP_IQF:
+        g_value_set_string (value, src->path_to_iqf);
+        break;
+#endif
     default:
         G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
         break;
@@ -545,6 +559,17 @@ gst_xcam_src_set_property (
     case PROP_3A_ANALYZER:
         src->analyzer_type = (AnalyzerType)g_value_get_enum (value);
         break;
+#if HAVE_RK_IQ
+    case PROP_IQF: {
+        const char * iqf = g_value_get_string (value);
+        if (src->path_to_iqf)
+            xcam_free (src->path_to_iqf);
+        src->path_to_iqf = NULL;
+        if (iqf)
+            src->path_to_iqf = strndup (iqf, XCAM_MAX_STR_SIZE);
+        break;
+    }
+#endif
     default:
         G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
         break;
@@ -660,6 +685,7 @@ gst_xcam_src_start (GstBaseSrc *src)
     //device_manager->set_isp_device (isp_device);
 
 #if HAVE_RK_IQ
+	device_manager->set_iq_path(rkisp->path_to_iqf);
     isp_controller = new IspController (isp_device);
 #endif
 

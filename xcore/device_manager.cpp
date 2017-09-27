@@ -166,13 +166,19 @@ DeviceManager::set_poll_thread (SmartPtr<PollThread> thread)
     return true;
 }
 
+bool
+DeviceManager::set_iq_path(const char* iq_file) {
+	strcpy(_iq_file, iq_file);
+	return true;
+}
+
 XCamReturn
 DeviceManager::start ()
 {
     XCamReturn ret = XCAM_RETURN_NO_ERROR;
 
     XCAM_LOG_INFO ("device manager start, capture dev fd: %d\n", _device->get_fd());
-    rkisp_start(_rkisp_engine, _device->get_fd(), "/etc/cam_iq.xml");
+    rkisp_start(_rkisp_engine, _device->get_fd(), _iq_file);
     XCAM_LOG_INFO ("device manager isp_init\n");
 
     if (_rkisp_engine == NULL) {
