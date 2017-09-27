@@ -40,12 +40,6 @@
 #include <v4l2_buffer_proxy.h>
 #include <v4l2_device.h>
 #include <device_manager.h>
-#if HAVE_IA_AIQ
-#include <isp/atomisp_device.h>
-#include <isp/isp_controller.h>
-#include <isp/isp_image_processor.h>
-#include <isp/x3a_analyzer_aiq.h>
-#endif
 #if HAVE_RK_IQ
 #include <rkisp/rkisp_device.h>
 #include <rkisp/isp_controller.h>

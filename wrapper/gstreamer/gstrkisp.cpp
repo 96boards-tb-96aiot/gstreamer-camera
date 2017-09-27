@@ -33,16 +33,9 @@
 
 #include "gstrkisp.h"
 #include "gstxcambufferpool.h"
-#if HAVE_IA_AIQ
-#include "gstxcaminterface.h"
-#include "dynamic_analyzer_loader.h"
-#include "isp/hybrid_analyzer_loader.h"
-#include "x3a_analyze_tuner.h"
-#include "isp/isp_poll_thread.h"
-#endif
 #if HAVE_RK_IQ
 #include "gstxcaminterface.h"
-#include "isp/isp_poll_thread.h"
+#include "rkisp/isp_poll_thread.h"
 #endif
 
 #include "fake_poll_thread.h"
@@ -58,9 +51,9 @@ using namespace GstXCam;
 #define CAPTURE_DEVICE_VIDEO    "/dev/video0"
 #define ISP_DEVICE_VIDEO    "/dev/video1"
 
-#if HAVE_IA_AIQ
-#define DEFAULT_CPF_FILE_NAME   "/etc/atomisp/imx185.cpf"
-#define DEFAULT_DYNAMIC_3A_LIB  "/usr/lib/xcam/plugins/3a/libxcam_3a_aiq.so"
+#if HAVE_RK_IQ
+#define DEFAULT_CPF_FILE_NAME  "/etc/cam_iq.xml"
+#define DEFAULT_DYNAMIC_3A_LIB "/usr/local/lib/librkisp.so"
 #endif
 
 #define V4L2_CAPTURE_MODE_STILL 0x2000
@@ -69,7 +62,7 @@ using namespace GstXCam;
 
 #define DEFAULT_PROP_SENSOR             0
 #define DEFAULT_PROP_MEM_MODE           V4L2_MEMORY_DMABUF
-#if HAVE_IA_AIQ
+#if HAVE_RK_IQ
 #define DEFAULT_PROP_ENABLE_3A          TRUE
 #endif
 #define DEFAULT_PROP_ENABLE_USB         FALSE
@@ -77,10 +70,6 @@ using namespace GstXCam;
 #define DEFAULT_PROP_PIXELFORMAT        V4L2_PIX_FMT_NV12 //420 instead of 0
 #define DEFAULT_PROP_FIELD              V4L2_FIELD_NONE // 0
 #define DEFAULT_PROP_ANALYZER           SIMPLE_ANALYZER
-#if HAVE_IA_AIQ
-#define DEFAULT_PROP_IMAGE_PROCESSOR    ISP_IMAGE_PROCESSOR
-#endif
-
 #if HAVE_RK_IQ
 #define DEFAULT_PROP_IMAGE_PROCESSOR    ISP_IMAGE_PROCESSOR
 #endif
@@ -159,13 +148,9 @@ gst_xcam_src_image_processor_get_type (void)
 {
     static GType g_type = 0;
     static const GEnumValue image_processor_types[] = {
-#if HAVE_IA_AIQ
-        {ISP_IMAGE_PROCESSOR, "ISP image processor", "isp"},
-#endif
 #if HAVE_RK_IQ
         {ISP_IMAGE_PROCESSOR, "ISP image processor", "rkisp"},
 #endif
-
         {0, NULL, NULL},
     };
 
@@ -185,9 +170,6 @@ gst_xcam_src_analyzer_get_type (void)
     static GType g_type = 0;
     static const GEnumValue analyzer_types[] = {
         {SIMPLE_ANALYZER, "simple 3A analyzer", "simple"},
-#if HAVE_IA_AIQ
-        {AIQ_TUNER_ANALYZER, "aiq 3A analyzer", "aiq"},
-#endif
         {0, NULL, NULL},
     };
 
@@ -212,7 +194,7 @@ enum {
     PROP_3A_ANALYZER,
     PROP_PIPE_PROFLE,
     PROP_CPF,
-#if HAVE_IA_AIQ
+#if HAVE_RK_IQ
     PROP_ENABLE_3A,
     PROP_3A_LIB,
 #endif
@@ -226,7 +208,7 @@ enum {
     PROP_FAKE_INPUT
 };
 
-#if HAVE_IA_AIQ
+#if HAVE_RK_IQ
 static void gst_xcam_src_xcam_3a_interface_init (GstXCam3AInterface *iface);
 
 G_DEFINE_TYPE_WITH_CODE  (GstXCamSrc, gst_xcam_src, GST_TYPE_PUSH_SRC,
@@ -251,7 +233,7 @@ static gboolean gst_xcam_src_unlock_stop (GstBaseSrc *src);
 static GstFlowReturn gst_xcam_src_alloc (GstBaseSrc *src, guint64 offset, guint size, GstBuffer **buffer);
 static GstFlowReturn gst_xcam_src_fill (GstPushSrc *src, GstBuffer *out);
 
-#if HAVE_IA_AIQ
+#if HAVE_RK_IQ
 /* GstXCamInterface implementation */
 static gboolean gst_xcam_src_set_white_balance_mode (GstXCam3A *xcam3a, XCamAwbMode mode);
 static gboolean gst_xcam_src_set_awb_speed (GstXCam3A *xcam3a, double speed);
@@ -369,23 +351,6 @@ gst_xcam_src_class_init (GstXCamSrcClass * class_self)
                            GST_TYPE_XCAM_SRC_ANALYZER, DEFAULT_PROP_ANALYZER,
                            (GParamFlags)(G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS)));
 
-#if HAVE_IA_AIQ
-    g_object_class_install_property (
-        gobject_class, PROP_ENABLE_3A,
-        g_param_spec_boolean ("enable-3a", "enable 3a", "Enable 3A",
-                              DEFAULT_PROP_ENABLE_3A, (GParamFlags)(G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS)));
-
-    g_object_class_install_property (
-        gobject_class, PROP_CPF,
-        g_param_spec_string ("path-cpf", "cpf", "Path to cpf",
-                             NULL, (GParamFlags)(G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS)));
-
-    g_object_class_install_property (
-        gobject_class, PROP_3A_LIB,
-        g_param_spec_string ("path-3alib", "3a lib", "Path to dynamic 3A library",
-                             NULL, (GParamFlags)(G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS)));
-#endif
-
     gst_element_class_set_details_simple (element_class,
                                           "Libxcam Source",
                                           "Source/Base",
@@ -421,12 +386,6 @@ gst_xcam_src_init (GstXCamSrc *rkisp)
     rkisp->capture_mode = V4L2_CAPTURE_MODE_VIDEO;
     rkisp->device = NULL;
     rkisp->enable_usb = DEFAULT_PROP_ENABLE_USB;
-
-#if HAVE_IA_AIQ
-    rkisp->enable_3a = DEFAULT_PROP_ENABLE_3A;
-    rkisp->path_to_cpf = strndup(DEFAULT_CPF_FILE_NAME, XCAM_MAX_STR_SIZE);
-    rkisp->path_to_3alib = strndup(DEFAULT_DYNAMIC_3A_LIB, XCAM_MAX_STR_SIZE);
-#endif
 
     rkisp->path_to_fake = NULL;
     rkisp->time_offset_ready = FALSE;
@@ -512,18 +471,6 @@ gst_xcam_src_get_property (
         g_value_set_enum (value, src->analyzer_type);
         break;
 
-#if HAVE_IA_AIQ
-    case PROP_ENABLE_3A:
-        g_value_set_boolean (value, src->enable_3a);
-        break;
-    case PROP_CPF:
-        g_value_set_string (value, src->path_to_cpf);
-        break;
-    case PROP_3A_LIB:
-        g_value_set_string (value, src->path_to_3alib);
-        break;
-#endif
-
     default:
         G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
         break;
@@ -598,37 +545,13 @@ gst_xcam_src_set_property (
     case PROP_3A_ANALYZER:
         src->analyzer_type = (AnalyzerType)g_value_get_enum (value);
         break;
-
-#if HAVE_IA_AIQ
-    case PROP_ENABLE_3A:
-        src->enable_3a = g_value_get_boolean (value);
-        break;
-    case PROP_CPF: {
-        const char * cpf = g_value_get_string (value);
-        if (src->path_to_cpf)
-            xcam_free (src->path_to_cpf);
-        src->path_to_cpf = NULL;
-        if (cpf)
-            src->path_to_cpf = strndup (cpf, XCAM_MAX_STR_SIZE);
-        break;
-    }
-    case PROP_3A_LIB: {
-        const char * path = g_value_get_string (value);
-        if (src->path_to_3alib)
-            xcam_free (src->path_to_3alib);
-        src->path_to_3alib = NULL;
-        if (path)
-            src->path_to_3alib = strndup (path, XCAM_MAX_STR_SIZE);
-        break;
-    }
-#endif
     default:
         G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
         break;
     }
 }
 
-#if HAVE_IA_AIQ
+#if HAVE_RK_IQ
 static void
 gst_xcam_src_xcam_3a_interface_init (GstXCam3AInterface *iface)
 {
@@ -679,10 +602,6 @@ gst_xcam_src_start (GstBaseSrc *src)
     GstXCamSrc *rkisp = GST_XCAM_SRC (src);
     SmartPtr<MainDeviceManager> device_manager = rkisp->device_manager;
     SmartPtr<X3aAnalyzer> analyzer;
-#if HAVE_IA_AIQ
-    SmartPtr<ImageProcessor> isp_processor;
-    SmartPtr<IspController> isp_controller;
-#endif
 #if HAVE_RK_IQ
     SmartPtr<ImageProcessor> isp_processor;
     SmartPtr<IspController> isp_controller;
@@ -719,12 +638,6 @@ gst_xcam_src_start (GstBaseSrc *src)
     } else if (rkisp->enable_usb) {
         capture_device = new UVCDevice (rkisp->device);
     }
-#if HAVE_IA_AIQ
-    else {
-        capture_device = new AtomispDevice (rkisp->device);
-        isp_device = new AtomispDevice (rkisp->isp_device);
-    }
-#endif
 #if HAVE_RK_IQ
     else {
         capture_device = new RKispDevice (rkisp->device);
@@ -746,21 +659,11 @@ gst_xcam_src_start (GstBaseSrc *src)
     isp_device->open ();
     //device_manager->set_isp_device (isp_device);
 
-#if HAVE_IA_AIQ
-    isp_controller = new IspController (isp_device);
-#endif
 #if HAVE_RK_IQ
     isp_controller = new IspController (isp_device);
 #endif
 
     switch (rkisp->image_processor_type) {
-#if HAVE_IA_AIQ
-    case ISP_IMAGE_PROCESSOR: {
-        isp_processor = new IspImageProcessor (isp_controller);
-        device_manager->add_image_processor (isp_processor);
-        break;
-    }
-#endif
 #if HAVE_RK_IQ
     case ISP_IMAGE_PROCESSOR: {
         isp_processor = new IspImageProcessor (isp_controller);
@@ -778,17 +681,6 @@ gst_xcam_src_start (GstBaseSrc *src)
         analyzer = new X3aAnalyzerSimple ();
         break;
     }
-#if HAVE_IA_AIQ
-    case AIQ_TUNER_ANALYZER: {
-        XCAM_LOG_INFO ("cpf: %s", rkisp->path_to_cpf);
-        SmartPtr<X3aAnalyzer> aiq_analyzer = new X3aAnalyzerAiq (isp_controller, rkisp->path_to_cpf);
-        SmartPtr<X3aAnalyzeTuner> tuner_analyzer = new X3aAnalyzeTuner ();
-        XCAM_ASSERT (aiq_analyzer.ptr () && tuner_analyzer.ptr ());
-        tuner_analyzer->set_analyzer (aiq_analyzer);
-        analyzer = tuner_analyzer;
-        break;
-    }
-#endif
     default:
         XCAM_LOG_ERROR ("unknown analyzer type");
         return false;
@@ -812,13 +704,6 @@ gst_xcam_src_start (GstBaseSrc *src)
     } else if (rkisp->path_to_fake) {
         poll_thread = new FakePollThread (rkisp->path_to_fake);
     }
-#if HAVE_IA_AIQ
-    else {
-        SmartPtr<IspPollThread> isp_poll_thread = new IspPollThread ();
-        isp_poll_thread->set_isp_controller (isp_controller);
-        poll_thread = isp_poll_thread;
-    }
-#endif
 #if HAVE_RK_IQ
     else {
         SmartPtr<IspPollThread> isp_poll_thread = new IspPollThread ();
@@ -1041,7 +926,7 @@ gst_xcam_src_fill (GstPushSrc *basesrc, GstBuffer *buf)
     return GST_FLOW_OK;
 }
 
-#if HAVE_IA_AIQ
+#if HAVE_RK_IQ
 static gboolean
 gst_xcam_src_set_white_balance_mode (GstXCam3A *xcam3a, XCamAwbMode mode)
 {
