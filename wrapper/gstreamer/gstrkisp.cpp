@@ -793,6 +793,8 @@ translate_format_to_xcam (GstVideoFormat format)
     switch (format) {
     case GST_VIDEO_FORMAT_NV12:
         return V4L2_PIX_FMT_NV12;
+    case GST_VIDEO_FORMAT_NV21:
+        return V4L2_PIX_FMT_NV21;
     case GST_VIDEO_FORMAT_I420:
         return V4L2_PIX_FMT_YUV420;
     case GST_VIDEO_FORMAT_YUY2:
@@ -821,6 +823,7 @@ gst_xcam_src_set_caps (GstBaseSrc *src, GstCaps *caps)
 
     gst_video_info_from_caps (&info, caps);
     XCAM_ASSERT ((GST_VIDEO_INFO_FORMAT (&info) == GST_VIDEO_FORMAT_NV12) ||
+                 (GST_VIDEO_INFO_FORMAT (&info) == GST_VIDEO_FORMAT_NV21) ||
                  (GST_VIDEO_INFO_FORMAT (&info) == GST_VIDEO_FORMAT_YUY2));
 
     out_format = translate_format_to_xcam (GST_VIDEO_INFO_FORMAT (&info));
@@ -850,6 +853,9 @@ gst_xcam_src_set_caps (GstBaseSrc *src, GstCaps *caps)
     for (uint32_t n = 0; n < GST_VIDEO_INFO_N_PLANES (&rkisp->gst_video_info); n++) {
         GST_VIDEO_INFO_PLANE_OFFSET (&rkisp->gst_video_info, n) = offset;
         if (out_format == V4L2_PIX_FMT_NV12) {
+            GST_VIDEO_INFO_PLANE_STRIDE (&rkisp->gst_video_info, n) = format.fmt.pix.bytesperline * 2 / 3;
+        }
+        else if (format.fmt.pix.pixelformat == V4L2_PIX_FMT_NV21) {
             GST_VIDEO_INFO_PLANE_STRIDE (&rkisp->gst_video_info, n) = format.fmt.pix.bytesperline * 2 / 3;
         }
         else if (format.fmt.pix.pixelformat == V4L2_PIX_FMT_YUYV) {

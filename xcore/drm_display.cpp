@@ -341,7 +341,8 @@ DrmDisplay::create_drm_buf (
     gem.width = format.fmt.pix.bytesperline;
     gem.height = format.fmt.pix.height;
 	gem.bpp = 8;
-    if (format.fmt.pix.pixelformat == V4L2_PIX_FMT_NV12)
+    if (format.fmt.pix.pixelformat == V4L2_PIX_FMT_NV12 ||
+			format.fmt.pix.pixelformat == V4L2_PIX_FMT_NV21)
         gem.bpp = 12;
     ret = xcam_device_ioctl (_fd, DRM_IOCTL_MODE_CREATE_DUMB, &gem);
     XCAM_ASSERT (ret >= 0);

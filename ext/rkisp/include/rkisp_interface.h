@@ -168,10 +168,10 @@ typedef struct CamIA10_AWB_Result_s {
 
 /* -------- CamIsp10CtrItf interface -----------*/
 int
-rkisp_start(void* &engine, int vidFd, const char* tuningFile);
+rkisp_start(void* &engine, int vidFd, const char* ispNode, const char* tuningFile);
 
 int
-rkisp_stop(void* engine);
+rkisp_stop(void* &engine);
 
 /* -------- CamIA10EngineItf interface ---------*/
 int
@@ -201,89 +201,6 @@ rkisp_iq_awb_run(void* engine);
 int
 rkisp_iq_get_awb_result(void* engine, CamIA10_AWB_Result_t* result);
 
-//useless-------------------------------------------
-/*
-static void
-ia_cmc_parser_deinit(ia_cmc_t *ia_cmc);
-static ia_cmc_t*
-ia_cmc_parser_init(const ia_binary_data *aiqb_binary);
-
-static void ia_coordinate_convert_rect(const ia_coordinate_system* a_src_system_ptr,
-                                const ia_rectangle* a_src_rect_ptr,
-                                const ia_coordinate_system* a_tgt_system_ptr,
-                                ia_rectangle* a_tgt_rect_ptr) ;
-
-static ia_isp*
-ia_isp_2_2_init(const ia_binary_data *aiqb_data,
-        unsigned int stats_max_width,
-        unsigned int stats_max_height,
-        ia_cmc_t *ia_cmc,
-        ia_mkn *ia_mkn);
-
-static void
-ia_isp_2_2_deinit(ia_isp *ia_isp);
-
-static ia_err
-ia_isp_2_2_run(ia_isp *ia_isp,
-               const ia_isp_2_2_input_params *isp_input_params,
-               ia_binary_data *output_data);
-
-static void
-ia_aiq_deinit(ia_aiq *ia_aiq) ;
-
-static ia_err
-ia_isp_2_2_statistics_convert(ia_isp *ia_isp,
-    void *statistics,
-    ia_aiq_rgbs_grid **out_rgbs_grid,
-    ia_aiq_af_grid **out_af_grid);
-
-static ia_mkn*
-ia_mkn_init(ia_mkn_config_bits mkn_config_bits,
-            size_t mkn_section_1_size,
-            size_t mkn_section_2_size) ;
-
-static void
-ia_mkn_uninit(ia_mkn *mkn);
-
-static ia_err
-ia_aiq_awb_run(ia_aiq *ia_aiq,
-               const ia_aiq_awb_input_params *awb_input_params,
-               ia_aiq_awb_results **awb_results);
-
-static ia_aiq*
-ia_aiq_init(const ia_binary_data *aiqb_data,
-            const ia_binary_data *nvm_data,
-            const ia_binary_data *aiqd_data,
-            unsigned int stats_max_width,
-            unsigned int stats_max_height,
-            unsigned int max_num_stats_in,
-            ia_cmc_t *ia_cmc,
-            ia_mkn *ia_mkn);
-
-static ia_err
-ia_aiq_pa_run(ia_aiq *ia_aiq,
-               const ia_aiq_pa_input_params *pa_input_params,
-               ia_aiq_pa_results **pa_results);
-
-static ia_err
-ia_aiq_gbce_run(ia_aiq *ia_aiq,
-                const ia_aiq_gbce_input_params *gbce_input_params,
-                ia_aiq_gbce_results **gbce_results);
-
-static ia_err
-ia_aiq_ae_run(ia_aiq *ia_aiq,
-              const ia_aiq_ae_input_params *ae_input_params,
-              ia_aiq_ae_results **ae_results);
-
-static ia_err
-ia_aiq_sa_run(ia_aiq *ia_aiq,
-               const ia_aiq_sa_input_params *sa_input_params,
-               ia_aiq_sa_results **sa_results);
-
-static ia_err
-ia_aiq_statistics_set(ia_aiq *ia_aiq,
-                      const ia_aiq_statistics_input_params *statistics_input_params);
-*/
 #ifdef __cplusplus
 }
 #endif

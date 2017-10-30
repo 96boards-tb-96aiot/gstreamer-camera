@@ -54,6 +54,7 @@ xcam_video_buffer_info_reset (
         image_size = info->strides [0] * aligned_height;
         break;
     case V4L2_PIX_FMT_NV12:
+    case V4L2_PIX_FMT_NV21:
         info->color_bits = 8;
         info->components = 2;
         info->strides [0] = aligned_width;
