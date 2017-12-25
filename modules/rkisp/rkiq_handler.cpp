@@ -27,7 +27,7 @@
 
 #include "ia_isp_2_2.h"
 
-#include "rkisp_3a_calc_interface.h"
+#include "rkisp_interface.h"
 
 
 #define MAX_STATISTICS_WIDTH 150

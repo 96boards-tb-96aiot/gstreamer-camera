@@ -190,7 +190,7 @@ ENABLE_RK_IQ=0
 if test "$enable_rkiq" = "yes"; then
 	ENABLE_RK_IQ=1
 	RKISP_CFLAGS="-I\$(top_srcdir)/ext/rkisp/include"
-	RKISP_LIBS="-L\$(top_srcdir)/ext/rkisp/lib -lrkisp -lrkisp_3a_interface"
+	RKISP_LIBS="-L\$(top_srcdir)/ext/rkisp/lib -lrkisp"
 	AC_SUBST(RKISP_CFLAGS)
     AC_SUBST(RKISP_LIBS)
     LIBS="$LIBS $RKISP_LIBS"
@@ -243,7 +243,7 @@ if test "$enable_aiq" = "yes"; then
         IA_IMAGING_LIBS="$IA_AIQ_LIBS"
     else
         IA_IMAGING_CFLAGS="-I\$(top_srcdir)/ext/rkisp/include"
-        IA_IMAGING_LIBS="-L\$(top_srcdir)/ext/rkisp/lib -lrkisp -lrkisp_3a_interface"
+        IA_IMAGING_LIBS="-L\$(top_srcdir)/ext/rkisp/lib -lrkisp"
     fi
     AC_SUBST(IA_IMAGING_CFLAGS)
     AC_SUBST(IA_IMAGING_LIBS)

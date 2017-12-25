@@ -21,7 +21,7 @@
 #include "poll_thread.h"
 #include "xcam_thread.h"
 #include <unistd.h>
-#include <rkisp_3a_calc_interface.h>
+#include <rkisp_interface.h>
 
 namespace XCam {
 

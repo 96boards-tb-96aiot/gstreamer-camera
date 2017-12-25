@@ -24,7 +24,8 @@
 #include "x3a_image_process_center.h"
 #include "x3a_analyzer_manager.h"
 
-#include <rkisp_3a_calc_interface.h>
+#include <dlfcn.h>
+#include <rkisp_interface.h>
 
 #define XCAM_FAILED_STOP(exp, msg, ...)                 \
     if ((exp) != XCAM_RETURN_NO_ERROR) {                \
@@ -81,6 +82,23 @@ DeviceManager::DeviceManager()
 {
     _3a_process_center = new X3aImageProcessCenter;
     XCAM_LOG_DEBUG ("~DeviceManager construction");
+	_RKIspFunc.rkisp_handle = dlopen("/usr/lib/librkisp.so", RTLD_NOW);
+	if (_RKIspFunc.rkisp_handle == NULL) {
+		XCAM_LOG_ERROR ("open /usr/lib/librkisp.so failed");
+	} else {
+		XCAM_LOG_INFO ("open /usr/lib/librkisp.so successed");
+		_RKIspFunc.start_func=(rkisp_start_func)dlsym(_RKIspFunc.rkisp_handle, "rkisp_start");
+		_RKIspFunc.stop_func=(rkisp_stop_func)dlsym(_RKIspFunc.rkisp_handle, "rkisp_stop");
+		if (_RKIspFunc.start_func == NULL) {
+			XCAM_LOG_ERROR ("func rkisp_start not found.");
+			const char *errmsg;
+            if ((errmsg = dlerror()) != NULL) {
+                XCAM_LOG_ERROR("dlsym rkisp_start fail errmsg: %s", errmsg);
+            }
+        } else {
+            XCAM_LOG_INFO("dlsym rkisp_start success");
+        }
+	}
 }
 
 DeviceManager::~DeviceManager()
@@ -177,15 +195,20 @@ DeviceManager::start ()
 {
     XCamReturn ret = XCAM_RETURN_NO_ERROR;
 
-    XCAM_LOG_INFO ("device manager start, capture dev fd: %d\n", _device->get_fd());
-    rkisp_start(_rkisp_engine, _device->get_fd(), _iq_file);
-    XCAM_LOG_INFO ("device manager isp_init\n");
-
-    if (_rkisp_engine == NULL) {
-        XCAM_LOG_INFO ("rkisp_init engine failed\n");
-    } else {
-        XCAM_LOG_INFO ("rkisp_init engine succeed\n");
-    }
+	if (_RKIspFunc.start_func != NULL) {
+	    XCAM_LOG_INFO ("device manager start, capture dev fd: %d\n", _device->get_fd());
+		_RKIspFunc.start_func(_rkisp_engine, _device->get_fd(), "/dev/video1", _iq_file);
+	    //rkisp_start(_rkisp_engine, _device->get_fd(), "/dev/video1", _iq_file);
+	    XCAM_LOG_INFO ("device manager isp_init\n");
+	
+	    if (_rkisp_engine == NULL) {
+	        XCAM_LOG_INFO ("rkisp_init engine failed\n");
+	    } else {
+	        XCAM_LOG_INFO ("rkisp_init engine succeed\n");
+	    }
+	} else {
+		rkisp_start(_rkisp_engine, _device->get_fd(), "/dev/video1", _iq_file);
+	}
 
     // start device
     XCAM_ASSERT (_device->is_opened());
@@ -208,6 +231,8 @@ DeviceManager::start ()
         XCAM_FAILED_STOP (ret = _ispdevice->start(), "start isp device failed");
     }
 
+	//rkisp_stop(_rkisp_engine);
+	//rkisp_start(_rkisp_engine, _device->get_fd(), "/dev/video1", _iq_file);
 
     if (_has_3a) {
         // Initialize and start analyzer
@@ -279,9 +304,6 @@ DeviceManager::start ()
 XCamReturn
 DeviceManager::stop ()
 {
-    XCAM_LOG_INFO ("deinit rkisp engine\n");
-    rkisp_stop(_rkisp_engine);
-
     _is_running = false;
 
     if (_poll_thread.ptr())
@@ -308,6 +330,15 @@ DeviceManager::stop ()
     _device->stop ();
 
     _poll_thread.release ();
+
+	if (_RKIspFunc.stop_func != NULL) {
+	    XCAM_LOG_INFO ("deinit rkisp engine\n");
+		_RKIspFunc.stop_func(_rkisp_engine);
+		dlclose(_RKIspFunc.rkisp_handle);
+	} else {
+    	rkisp_stop(_rkisp_engine);
+	}
+
 
     XCAM_LOG_DEBUG ("Device manager stopped");
     return XCAM_RETURN_NO_ERROR;
