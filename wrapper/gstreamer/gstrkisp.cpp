@@ -299,13 +299,13 @@ gst_xcam_src_class_init (GstXCamSrcClass * class_self)
         gobject_class, PROP_DEVICE,
         g_param_spec_string ("device", "device", "Device location",
                              NULL, (GParamFlags)(G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS)));
-/*
+
     g_object_class_install_property (
         gobject_class, PROP_SENSOR,
         g_param_spec_int ("sensor-id", "sensor id", "Sensor ID to select",
                           0, G_MAXINT, DEFAULT_PROP_SENSOR,
                           (GParamFlags)(G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS) ));
-*/
+
     g_object_class_install_property (
         gobject_class, PROP_MEM_MODE,
         g_param_spec_enum ("io-mode", "memory mode", "Memory mode",

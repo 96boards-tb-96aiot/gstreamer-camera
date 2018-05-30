@@ -195,9 +195,11 @@ DeviceManager::start ()
 {
     XCamReturn ret = XCAM_RETURN_NO_ERROR;
 
+    char ispDevice[256];
+    sprintf(ispDevice, "/dev/video%d", _device->_sensor_id);
 	if (_RKIspFunc.start_func != NULL) {
 	    XCAM_LOG_INFO ("device manager start, capture dev fd: %d\n", _device->get_fd());
-		_RKIspFunc.start_func(_rkisp_engine, _device->get_fd(), "/dev/video1", _iq_file);
+		_RKIspFunc.start_func(_rkisp_engine, _device->get_fd(), ispDevice, _iq_file);
 	    //rkisp_start(_rkisp_engine, _device->get_fd(), "/dev/video1", _iq_file);
 	    XCAM_LOG_INFO ("device manager isp_init\n");
 	
@@ -207,7 +209,7 @@ DeviceManager::start ()
 	        XCAM_LOG_INFO ("rkisp_init engine succeed\n");
 	    }
 	} else {
-		rkisp_start(_rkisp_engine, _device->get_fd(), "/dev/video1", _iq_file);
+		rkisp_start(_rkisp_engine, _device->get_fd(), ispDevice, _iq_file);
 	}
 
     // start device

@@ -3,7 +3,7 @@
 
 m4_define([xcam_major_version], [1])
 m4_define([xcam_minor_version], [1])
-m4_define([xcam_micro_version], [1])
+m4_define([xcam_micro_version], [2])
 m4_define([xcam_version], [xcam_major_version.xcam_minor_version.xcam_micro_version])
 
 AC_PREREQ([2.60])
@@ -61,8 +61,8 @@ AC_ARG_ENABLE([gst],
 
 AC_ARG_ENABLE(libcl,
     AS_HELP_STRING([--enable-libcl],
-                   [enable libcl image processor, @<:@default=yes@:>@]),
-    [], [enable_libcl="yes"])
+                   [enable libcl image processor, @<:@default=no@:>@]),
+    [], [enable_libcl="no"])
 
 AC_ARG_ENABLE(opencv,
     AS_HELP_STRING([--enable-opencv],

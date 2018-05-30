@@ -107,6 +107,7 @@ public:
     // use as less as possible
     virtual int io_control (int cmd, void *arg);
 
+    int32_t             _sensor_id;
 protected:
 
     //virtual functions, handle private actions on set_format
@@ -127,7 +128,6 @@ private:
 protected:
     char               *_name;
     int                 _fd;
-    int32_t             _sensor_id;
     uint32_t            _capture_mode;
     enum v4l2_buf_type  _capture_buf_type;
     enum v4l2_memory    _memory_type;
