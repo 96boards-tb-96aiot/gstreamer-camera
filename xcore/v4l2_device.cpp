@@ -157,12 +157,12 @@ V4l2Device::open ()
         XCAM_LOG_DEBUG ("open device(%s) failed", _name);
         return XCAM_RETURN_ERROR_IOCTL;
     }
-
+#if 0
     // set sensor id
     if (io_control (VIDIOC_S_INPUT, &_sensor_id) < 0) {
         XCAM_LOG_WARNING ("set sensor id(%d) failed but continue", _sensor_id);
     }
-
+#endif
     // set capture mode
     xcam_mem_clear (param);
     param.type = _capture_buf_type;

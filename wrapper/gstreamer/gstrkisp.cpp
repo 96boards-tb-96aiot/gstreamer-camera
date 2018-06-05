@@ -642,9 +642,12 @@ gst_xcam_src_start (GstBaseSrc *src)
             rkisp->device = strndup (CAPTURE_DEVICE_STILL, XCAM_MAX_STR_SIZE);
         else
             rkisp->device = strndup (CAPTURE_DEVICE_VIDEO, XCAM_MAX_STR_SIZE);
+        rkisp->sensor_id = 1;
     }
     if (rkisp->isp_device == NULL) {
-         rkisp->isp_device = strndup (ISP_DEVICE_VIDEO, XCAM_MAX_STR_SIZE);
+         char tmp[256] = { 0 };
+         snprintf(tmp, sizeof(tmp), "/dev/video%d", rkisp->sensor_id);
+         rkisp->isp_device = strndup (tmp, XCAM_MAX_STR_SIZE);
     }
     XCAM_ASSERT (rkisp->device);
 
@@ -677,7 +680,7 @@ gst_xcam_src_start (GstBaseSrc *src)
     capture_device->open ();
     device_manager->set_capture_device (capture_device);
 
-    isp_device->set_sensor_id (rkisp->sensor_id);
+    //isp_device->set_sensor_id (rkisp->sensor_id);
     isp_device->set_capture_mode (rkisp->capture_mode);
     isp_device->set_mem_type (rkisp->mem_type);
     isp_device->set_buffer_count (rkisp->buf_count);

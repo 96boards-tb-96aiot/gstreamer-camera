@@ -203,21 +203,21 @@ DeviceManager::start ()
     XCamReturn ret = XCAM_RETURN_NO_ERROR;
 
     char ispDevice[256];
-    sprintf(ispDevice, "/dev/video%d", _device->_sensor_id);
-	if (_RKIspFunc.start_func != NULL) {
-	    XCAM_LOG_INFO ("device manager start, capture dev fd: %d\n", _device->get_fd());
-		_RKIspFunc.start_func(_rkisp_engine, _device->get_fd(), ispDevice, _iq_file);
-	    //rkisp_start(_rkisp_engine, _device->get_fd(), "/dev/video1", _iq_file);
-	    XCAM_LOG_INFO ("device manager isp_init\n");
-	
-	    if (_rkisp_engine == NULL) {
-	        XCAM_LOG_INFO ("rkisp_init engine failed\n");
-	    } else {
-	        XCAM_LOG_INFO ("rkisp_init engine succeed\n");
-	    }
-	} else {
-		rkisp_start(_rkisp_engine, _device->get_fd(), ispDevice, _iq_file);
-	}
+    sprintf(ispDevice, "/dev/video%d", _device->get_sensor_id());
+    if (_RKIspFunc.start_func != NULL) {
+        XCAM_LOG_INFO ("device manager start, capture dev fd: %d\n", _device->get_fd());
+        _RKIspFunc.start_func(_rkisp_engine, _device->get_fd(), ispDevice, _iq_file);
+        //rkisp_start(_rkisp_engine, _device->get_fd(), "/dev/video1", _iq_file);
+        XCAM_LOG_INFO ("device manager isp_init\n");
+
+        if (_rkisp_engine == NULL) {
+            XCAM_LOG_INFO ("rkisp_init engine failed\n");
+        } else {
+            XCAM_LOG_INFO ("rkisp_init engine succeed\n");
+        }
+    } else {
+        rkisp_start(_rkisp_engine, _device->get_fd(), ispDevice, _iq_file);
+    }
 
     // start device
     XCAM_ASSERT (_device->is_opened());
@@ -336,10 +336,6 @@ DeviceManager::stop ()
     if (_ispdevice.ptr ())
         _ispdevice->stop ();
 
-    _device->stop ();
-
-    _poll_thread.release ();
-
     if (_RKIspFunc.stop_func != NULL) {
         XCAM_LOG_INFO ("deinit rkisp engine\n");
         _RKIspFunc.stop_func(_rkisp_engine);
@@ -348,6 +344,9 @@ DeviceManager::stop ()
     } else {
         rkisp_stop(_rkisp_engine);
     }
+
+    _device->stop ();
+    _poll_thread.release ();
 
     XCAM_LOG_DEBUG ("Device manager stopped");
     return XCAM_RETURN_NO_ERROR;
