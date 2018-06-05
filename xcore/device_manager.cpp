@@ -82,23 +82,30 @@ DeviceManager::DeviceManager()
 {
     _3a_process_center = new X3aImageProcessCenter;
     XCAM_LOG_DEBUG ("~DeviceManager construction");
-	_RKIspFunc.rkisp_handle = dlopen("/usr/lib/librkisp.so", RTLD_NOW);
-	if (_RKIspFunc.rkisp_handle == NULL) {
-		XCAM_LOG_ERROR ("open /usr/lib/librkisp.so failed");
-	} else {
-		XCAM_LOG_INFO ("open /usr/lib/librkisp.so successed");
-		_RKIspFunc.start_func=(rkisp_start_func)dlsym(_RKIspFunc.rkisp_handle, "rkisp_start");
-		_RKIspFunc.stop_func=(rkisp_stop_func)dlsym(_RKIspFunc.rkisp_handle, "rkisp_stop");
-		if (_RKIspFunc.start_func == NULL) {
-			XCAM_LOG_ERROR ("func rkisp_start not found.");
-			const char *errmsg;
-            if ((errmsg = dlerror()) != NULL) {
-                XCAM_LOG_ERROR("dlsym rkisp_start fail errmsg: %s", errmsg);
-            }
-        } else {
-            XCAM_LOG_INFO("dlsym rkisp_start success");
-        }
-	}
+
+    _RKIspFunc.rkengine_handle = dlopen("/usr/lib/libcam_ia.so", RTLD_NOW);
+    if (_RKIspFunc.rkengine_handle == NULL) {
+        XCAM_LOG_ERROR ("open /usr/lib/libcam_ia.so failed");
+    } else {
+        XCAM_LOG_INFO ("open /usr/lib/libcam_ia.so successed");
+    }
+     _RKIspFunc.rkisp_handle = dlopen("/usr/lib/libcam_engine_cifisp.so", RTLD_NOW);
+     if (_RKIspFunc.rkisp_handle == NULL) {
+         XCAM_LOG_ERROR ("open /usr/lib/libcam_engine_cifisp.so failed");
+     } else {
+         XCAM_LOG_INFO ("open /usr/lib/libcam_engine_cifisp.so successed");
+         _RKIspFunc.start_func=(rkisp_start_func)dlsym(_RKIspFunc.rkisp_handle, "rkisp_start");
+         _RKIspFunc.stop_func=(rkisp_stop_func)dlsym(_RKIspFunc.rkisp_handle, "rkisp_stop");
+         if (_RKIspFunc.start_func == NULL) {
+             XCAM_LOG_ERROR ("func rkisp_start not found.");
+             const char *errmsg;
+             if ((errmsg = dlerror()) != NULL) {
+                 XCAM_LOG_ERROR("dlsym rkisp_start fail errmsg: %s", errmsg);
+             }
+         } else {
+             XCAM_LOG_INFO("dlsym rkisp_start success");
+         }
+     }
 }
 
 DeviceManager::~DeviceManager()
@@ -333,14 +340,14 @@ DeviceManager::stop ()
 
     _poll_thread.release ();
 
-	if (_RKIspFunc.stop_func != NULL) {
-	    XCAM_LOG_INFO ("deinit rkisp engine\n");
-		_RKIspFunc.stop_func(_rkisp_engine);
-		dlclose(_RKIspFunc.rkisp_handle);
-	} else {
-    	rkisp_stop(_rkisp_engine);
-	}
-
+    if (_RKIspFunc.stop_func != NULL) {
+        XCAM_LOG_INFO ("deinit rkisp engine\n");
+        _RKIspFunc.stop_func(_rkisp_engine);
+        dlclose(_RKIspFunc.rkengine_handle);
+        dlclose(_RKIspFunc.rkisp_handle);
+    } else {
+        rkisp_stop(_rkisp_engine);
+    }
 
     XCAM_LOG_DEBUG ("Device manager stopped");
     return XCAM_RETURN_NO_ERROR;

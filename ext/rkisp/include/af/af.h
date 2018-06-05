@@ -4,7 +4,7 @@
  * No part of this work may be reproduced, modified, distributed, transmitted,
  * transcribed, or translated into any language or computer format, in any form
  * or by any means without written permission of:
- * Copyright 2016, Fuzhou Rockchip Electronics Co.Ltd 
+ * Fuzhou Rockchip Electronics Co.Ltd .
  * 
  *
  *****************************************************************************/
@@ -30,13 +30,9 @@
  */
 #include <ebase/types.h>
 #include <common/return_codes.h>
-
-#include "af_independent.h"
-//#include <isi/isi_iss.h>
-//#include <isi/isi.h>
-
-//#include <cameric_drv/cameric_drv_api.h>
-//#include <cameric_drv/cameric_isp_afm_drv_api.h>
+#include <common/cam_types.h>
+#include <oslayer/oslayer.h>
+#include <common/list.h>
 
 #ifdef __cplusplus
 extern "C"
@@ -45,6 +41,9 @@ extern "C"
 
 typedef struct AfContext_s* AfHandle_t;     /**< handle to AEC context */
 
+#define AF_TYPE_CONTRAST (1 << 0)
+#define AF_TYPE_LASER (1 << 1)
+#define AF_TYPE_PDAF (1 << 2)
 
 /*******************************************************************************
  *
@@ -79,6 +78,109 @@ typedef enum AfSearchTriggerMode_e {
   AFM_FSTM_MAX,
 } AfSearchTriggerMode_t;
 
+typedef enum CamerIcIspAfmWindowId_e {
+  CAMERIC_ISP_AFM_WINDOW_INVALID  = 0,	  /**< lower border (only for an internal evaluation) */
+  CAMERIC_ISP_AFM_WINDOW_A        = 1,    /**< Window A (1st window) */
+  CAMERIC_ISP_AFM_WINDOW_B        = 2,    /**< Window B (2nd window) */
+  CAMERIC_ISP_AFM_WINDOW_C        = 3,    /**< Window C (3rd window) */
+  CAMERIC_ISP_AFM_WINDOW_MAX,             /**< upper border (only for an internal evaluation) */
+} CamerIcIspAfmWindowId_t;
+
+typedef enum CamerIcIspVcmMoveRes_e {
+  CAMERIC_ISP_VCM_INVAL        = 0,
+  CAMERIC_ISP_VCM_MOVE_START   = 1,
+  CAMERIC_ISP_VCM_MOVE_RUNNING = 2,
+  CAMERIC_ISP_VCM_MOVE_END     = 3
+} CamerIcIspAfmVcmMoveRes_t;
+
+/******************************************************************************/
+/**
+ *          CamerIcEventCb_t
+ *
+ *  @brief  Event callback
+ *
+ *  This callback is used to signal something to the application software,
+ *  e.g. an error or an information.
+ *
+ *  @return void
+ *
+ *****************************************************************************/
+typedef struct CamerIcEventCb_s {
+  void*                pUserContext;  /**< user context */
+} CamerIcEventCb_t;
+
+/******************************************************************************/
+/**
+ * @struct  CamerIcAfmMeasuringResult_s
+ *
+ * @brief   A structure to represent a complete set of measuring values.
+ *
+ *****************************************************************************/
+typedef struct LaserMeas_s {
+  uint32_t  distance;  /* unit: mm */
+  uint32_t  rev[16];
+} LaserMeas_t;
+
+typedef struct CamerIcAfmMeasuringResult_s {
+  uint32_t    SharpnessA;         /**< sharpness of window A */
+  uint32_t    SharpnessB;         /**< sharpness of window B */
+  uint32_t    SharpnessC;         /**< sharpness of window C */
+
+  uint32_t    LuminanceA;         /**< luminance of window A */
+  uint32_t    LuminanceB;         /**< luminance of window B */
+  uint32_t    LuminanceC;         /**< luminance of window C */
+
+  CamerIcIspAfmVcmMoveRes_t MoveRes;
+} CamerIcAfmMeasuringResult_t;
+
+typedef struct AfMeas_s {
+  LaserMeas_t laser;
+  CamerIcAfmMeasuringResult_t cameric;
+
+  uint32_t meas_type;
+} AfMeas_t;
+
+/******************************************************************************/
+/**
+ * @struct  CamerIcAfmOutputResult_s
+ *
+ * @brief   A structure to represent a complete set of output values.
+ *
+ *****************************************************************************/
+typedef struct CamerIcAfmOutputResult_s {
+  int32_t 		 NextLensePos;
+  uint32_t		 Window_Num;
+  struct Cam_Win WindowA;
+  struct Cam_Win WindowB;
+  struct Cam_Win WindowC;
+} CamerIcAfmOutputResult_t;
+
+/******************************************************************************/
+/**
+ * @struct  CamerIcAfmType_t
+ *
+ * @brief 
+ *
+ *****************************************************************************/
+typedef struct CamerIcAfmType {
+  unsigned int contrast_af:1;
+  unsigned int laser_af:1;
+  unsigned int pdaf:1;
+} CamerIcAfmType_t;
+
+typedef struct CameraIcContrastAfCfg_s {
+  unsigned int rev[16];
+} CameraIcContrastAfCfg_t;
+
+typedef struct CameraIcLaserAfCfg_s {
+  float vcmDot[7];
+  float distanceDot[7];
+} CameraIcLaserAfCfg_t;
+
+typedef struct CameraIcPdafCfg_s {
+  unsigned int rev[16];
+} CameraIcPdafCfg_t;
+
 
 
 /*****************************************************************************/
@@ -92,8 +194,6 @@ typedef struct AfInstanceConfig_s {
   AfHandle_t              hAf;            /**< handle returned by AfInit() */
 } AfInstanceConfig_t;
 
-
-
 /*****************************************************************************/
 /**
  *          AfConfig_t
@@ -102,10 +202,18 @@ typedef struct AfInstanceConfig_s {
  *
  *****************************************************************************/
 typedef struct AfConfig_s {
-  IsiSensorHandle_t       hSensor;        /**< sensor handle */
-  IsiSensorHandle_t       hSubSensor;     /**< sub sensor handle */
+  CamerIcAfmType_t AfType;
+  CameraIcContrastAfCfg_t ContrastAf;
+  CameraIcLaserAfCfg_t LaserAf;
+  CameraIcPdafCfg_t Pdaf;
+  
+  uint32_t Window_Num;
+  struct Cam_Win WindowA;
+  struct Cam_Win WindowB;
+  struct Cam_Win WindowC;
 
-  AfSearchStrategy_t      Afss;           /**< focus search strategy */
+  int32_t 	  LensePos;
+  AfSearchStrategy_t Afss;           /**< focus search strategy */
 } AfConfig_t;
 
 
@@ -131,6 +239,12 @@ typedef struct AfEvt_s {
   } info;
   void*                   pEvntCtx;
 } AfEvt_t;
+
+
+typedef struct AfEvtQue_s {
+  List                   list;
+  osQueue                queue;
+} AfEvtQue_t;
 
 /*****************************************************************************/
 /**
@@ -216,7 +330,8 @@ RESULT AfConfigure
  *****************************************************************************/
 RESULT AfReConfigure
 (
-    AfHandle_t handle
+	AfHandle_t handle,
+	AfConfig_t* pConfig
 );
 
 
@@ -347,9 +462,25 @@ RESULT AfMeasureCbRestart
 RESULT AfProcessFrame
 (
     AfHandle_t                  handle,
-    CamerIcAfmMeasuringResult_t* pMeasResults
+    AfMeas_t* pMeasResults
 );
 
+/*****************************************************************************/
+/**
+ * @brief   The function
+ *
+ * @param   handle  AF instance handle
+ *
+ * @return  Return the result of the function call.
+ * @retval  RET_SUCCESS
+ * @retval  RET_FAILURE
+ *
+ *****************************************************************************/
+RESULT AfGetResult
+(
+    AfHandle_t                  handle,
+    CamerIcAfmOutputResult_t*   pOutputResults
+);
 
 
 /*****************************************************************************/
@@ -399,7 +530,7 @@ RESULT AfShotCheck
 );
 
 
-#if 0
+
 /******************************************************************************
  * AfRegisterEvtQue
  *****************************************************************************/
@@ -408,7 +539,6 @@ RESULT AfRegisterEvtQue
     AfHandle_t                  handle,
     AfEvtQue_t*                  evtQue
 );
-#endif
 
 /******************************************************************************
  * AfReset()
@@ -416,6 +546,7 @@ RESULT AfRegisterEvtQue
 RESULT AfReset
 (
     AfHandle_t                handle,
+    int32_t                   len_pos,
     const AfSearchStrategy_t  fss
 );
 

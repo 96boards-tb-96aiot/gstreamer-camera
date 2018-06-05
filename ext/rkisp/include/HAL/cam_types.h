@@ -30,6 +30,7 @@
 #define HAL_ISP_WDR_MASK  (1 << 15)
 #define HAL_ISP_DPF_MASK  (1 << 16)
 #define HAL_ISP_DPF_STRENGTH_MASK (1 << 17)
+#define HAL_ISP_3DNR_MASK  (1 << 18)
 
 #define HAL_ISP_ALL_MASK  (0xffffffff)
 
@@ -52,6 +53,7 @@ enum HAL_ISP_SUB_MODULE_ID_e {
   HAL_ISP_WDR_ID,
   HAL_ISP_DPF_ID,
   HAL_ISP_DPF_STRENGTH_ID,
+  HAL_ISP_3DNR_ID,
   HAL_ISP_MODULE_MAX_ID_ID,
 };
 
@@ -242,6 +244,11 @@ enum HAL_AE_FLK_MODE {
   HAL_AE_FLK_AUTO,
 };
 
+enum HAL_AE_STATE {
+  HAL_AE_STATE_UNSTABLE = 0,
+  HAL_AE_STATE_STABLE
+};
+
 enum HAL_AF_MODE {
   HAL_AF_MODE_NOT_SET = -1,
   HAL_AF_MODE_AUTO,
@@ -283,6 +290,7 @@ enum HAL_AE_METERING_MODE {
   HAL_AE_METERING_MODE_CENTER,
   HAL_AE_METERING_MODE_SPOT,
   HAL_AE_METERING_MODE_MATRIX,
+  HAL_AE_METERING_MODE_USER,
 };
 
 enum HAL_AF_STATUS {
@@ -314,6 +322,12 @@ enum HAL_FLIP_MODE {
   HAL_FLIP_V
 };
 
+enum HAL_DAYNIGHT_MODE {
+  HAL_DAYNIGHT_AUTO,
+  HAL_DAYNIGHT_DAY,
+  HAL_DAYNIGHT_NIGHT
+};
+
 typedef struct HAL_FPS_INFO_s {
   unsigned int numerator;
   unsigned int denominator;
@@ -330,6 +344,12 @@ enum JPEG_QUALITY {
   JPEG_QUALITY_MAX   = 95 /* Limited quality limits required JPEG buffer size (SMS06118100) */
 };
 
+enum HAL_MODE_e {
+  HAL_MODE_OFF,
+  HAL_MODE_AUTO,
+  HAL_MODE_MANUAL
+};
+
 struct HAL_AwbCfg {
   HAL_WB_MODE mode;
   HAL_Window win;
@@ -340,12 +360,28 @@ struct HAL_AecCfg {
   HAL_AE_OPERATION_MODE mode;
   HAL_AE_METERING_MODE meter_mode;
   HAL_Window win;
+  unsigned char meter_coeff[5*5];
   int ae_bias;
+  float set_point;
+  float aeMaxExpTime;
+  float aeMaxExpGain;
+  float api_set_fps;
+};
+
+struct HAL_AfcType {
+  unsigned int contrast_af:1;
+  unsigned int laser_af:1;
+  unsigned int pdaf:1;
 };
 
 struct HAL_AfcCfg {
   HAL_AF_MODE mode;
-  HAL_Window win;
+  struct HAL_AfcType type;
+  bool_t oneshot_trigger;
+  unsigned int win_num;
+  HAL_Window win_a;
+  HAL_Window win_b;
+  HAL_Window win_c;
 };
 
 struct HAL_SensorModeData {
@@ -385,6 +421,20 @@ struct HAL_ColorProcCfg {
   float sharpness;
 };
 
+enum  HAL_ISP_WDR_MODE_e {
+  HAL_ISP_WDR_MODE_BLOCK,
+  HAL_ISP_WDR_MODE_GLOBAL,
+  HAL_ISP_WDR_MODE_INVALID
+};
+
+struct HAL_WdrCfg {
+  enum HAL_MODE_e mode;
+  bool_t curve_enable;
+  HAL_ISP_WDR_MODE_e curve_mode;
+  uint16_t curve_dy[HAL_ISP_WDR_SECTION_MAX + 1];
+  bool_t gain_max_clip_enable;
+  uint8_t gain_max_value;
+};
 
 struct HAL_hist_stat {
   unsigned short usedCnt;
@@ -426,7 +476,7 @@ struct HAL_ISP_sdg_cfg_s {
 struct HAL_ISP_flt_cfg_s {
   uint8_t denoise_level;
   uint8_t sharp_level;
-  int light_mode;
+  int light_mode; 
 };
 
 enum HAL_ISP_GAMMA_SEG_MODE_e {
@@ -443,7 +493,7 @@ struct HAL_ISP_goc_cfg_s {
   HAL_ISP_GAMMA_SEG_MODE_e  mode;
   uint8_t  used_cnt;
   uint16_t gamma_y[HAL_ISP_GOC_SECTION_MAX];
-  int light_mode;  
+  int light_mode; 
 };
 
 enum HAL_ISP_COLOR_RANGE_e {
@@ -497,6 +547,7 @@ struct HAL_ISP_awb_gain_cfg_s {
 struct HAL_ISP_awb_cfg_s {
   struct HAL_ISP_awb_gain_cfg_s wb_gain;
   uint8_t DoorType;
+  char IllName[20];
 };
 
 
@@ -622,11 +673,6 @@ struct HAL_ISP_dpf_strength_cfg_s {
   float b;
 };
 
-enum  HAL_ISP_WDR_MODE_e {
-  HAL_ISP_WDR_MODE_BLOCK,
-  HAL_ISP_WDR_MODE_GLOBAL
-};
-
 struct HAL_ISP_wdr_cfg_s {
   bool_t wdr_enable;
   HAL_ISP_WDR_MODE_e mode;
@@ -731,6 +777,96 @@ struct HAL_ISP_DSP3DNR_cfg_s {
   } reserves;
 };
 
+struct HAL_3DnrLevelCfg {
+  unsigned char luma_sp_nr_en;
+  unsigned char luma_te_nr_en;
+  unsigned char chrm_sp_nr_en;
+  unsigned char chrm_te_nr_en;
+  unsigned char shp_en;
+  unsigned char luma_sp_nr_level;         // control the strength of spatial luma denoise
+  unsigned char luma_te_nr_level;         // control the strength of temporal luma denoise
+  unsigned char chrm_sp_nr_level;         // control the strength of spatial luma denoise
+  unsigned char chrm_te_nr_level;         // control the strength of spatial luma denoise
+  unsigned char shp_level;           // control sharpness strenth
+};
+
+struct HAL_3DnrParamCfg {
+  uint16_t noise_coef_num;
+  uint16_t noise_coef_den;
+
+  //5x5 luma spatial weight table,8bit for the center point,6bit for the other point,
+  //low 30bit is useful in w0 w1 w3 w4,6 6 8 6 6 in w2,all these weight are int type.
+  unsigned char luma_default;      // 1 use level define,0 use those parameters below
+  unsigned char luma_sp_rad;      //spatial bilateral filter size
+  unsigned char luma_te_max_bi_num;      //temporal max bilateral frame num
+  uint32_t luma_w0;            //
+  uint32_t luma_w1;
+  uint32_t luma_w2;
+  uint32_t luma_w3;
+  uint32_t luma_w4;
+
+  //5x5 chroma spatial weight table,8bit for the center point,6bit for the other point,
+  //low 30bit is useful in w0 w1 w3 w4,6 6 8 6 6 in w2,all these weight are unsigned int type.
+  unsigned char chrm_default;      // 1 use level define,0 use those parameters below
+  unsigned char chrm_sp_rad;      //chroma spatial bilateral filter size
+  unsigned char chrm_te_max_bi_num;      //temporal max bilateral frame num
+  uint32_t chrm_w0;            //
+  uint32_t chrm_w1;
+  uint32_t chrm_w2;
+  uint32_t chrm_w3;
+  uint32_t chrm_w4;
+
+  unsigned char shp_default;      // 1 use level define,0 use those parameters below
+  //5x5 sharpness weight table,8bit for the center point,6bit for the other point,
+  //low 30bit is useful in w0 w1 w3 w4,6 6 8 6 6 in w2,all these weight are int type.
+  uint32_t src_shp_w0;            //
+  uint32_t src_shp_w1;
+  uint32_t src_shp_w2;
+  uint32_t src_shp_w3;
+  uint32_t src_shp_w4;
+  //threshold from 0 to 31
+  unsigned char src_shp_thr;
+  //shift bit of  sum of weight.
+  unsigned char src_shp_div;
+  //luma sharpness enable flag
+  unsigned char src_shp_l;
+  //chroma sharpness enable flag
+  unsigned char src_shp_c;
+};
+
+struct HAL_3DnrCfg{
+  unsigned char Enable;
+  struct HAL_3DnrLevelCfg level_cfg;
+  struct HAL_3DnrParamCfg param_cfg;
+};
+
+enum HAL_FLT_DENOISE_LEVEL_e {
+  HAL_FLT_DENOISE_LEVEL_0,
+  HAL_FLT_DENOISE_LEVEL_1,
+  HAL_FLT_DENOISE_LEVEL_2,
+  HAL_FLT_DENOISE_LEVEL_3,
+  HAL_FLT_DENOISE_LEVEL_4,
+  HAL_FLT_DENOISE_LEVEL_5,
+  HAL_FLT_DENOISE_LEVEL_6,
+  HAL_FLT_DENOISE_LEVEL_7,
+  HAL_FLT_DENOISE_LEVEL_8,
+  HAL_FLT_DENOISE_LEVEL_9,
+  HAL_FLT_DENOISE_LEVEL_10
+};
+
+enum HAL_FLT_SHARPENING_LEVEL_e {
+  HAL_FLT_SHARPENING_LEVEL_0,
+  HAL_FLT_SHARPENING_LEVEL_1,
+  HAL_FLT_SHARPENING_LEVEL_2,
+  HAL_FLT_SHARPENING_LEVEL_3,
+  HAL_FLT_SHARPENING_LEVEL_4,
+  HAL_FLT_SHARPENING_LEVEL_5,
+  HAL_FLT_SHARPENING_LEVEL_6,
+  HAL_FLT_SHARPENING_LEVEL_7,
+  HAL_FLT_SHARPENING_LEVEL_8,
+  HAL_FLT_SHARPENING_LEVEL_9,
+  HAL_FLT_SHARPENING_LEVEL_10
+};
 
 struct HAL_Buffer_MetaData {
   struct HAL_ISP_awb_cfg_s awb;
@@ -741,11 +877,17 @@ struct HAL_Buffer_MetaData {
   struct HAL_ISP_DSP3DNR_cfg_s dsp_3DNR;
   struct HAL_ISP_ctk_cfg_s ctk;
   struct HAL_ISP_lsc_cfg_s lsc;
+  struct HAL_ISP_goc_cfg_s goc;
   struct timeval timStamp;
   float exp_time;
   float exp_gain;
+  float MeanLuma;
+  float DON_Fac;
+  uint8_t LightMode;
+  float overHistPercent;
   bool_t enabled[HAL_ISP_MODULE_MAX_ID_ID + 1];
   void* metedata_drv;
+  float maxGainRange;
 };
 
 enum HAL_ISP_ACTIVE_MODE {
@@ -795,6 +937,8 @@ struct HAL_ISP_cfg_s {
   struct HAL_ISP_hst_cfg_s* hst_cfg;
   /* bayer demosaic*/
   struct HAL_ISP_bdm_cfg_s* bdm_cfg;
+  /* 3dnr */
+  struct HAL_3DnrCfg* dsp_3dnr_cfg;
   /* need updated sub modules*/
   uint32_t updated_mask;
   /* enabled */

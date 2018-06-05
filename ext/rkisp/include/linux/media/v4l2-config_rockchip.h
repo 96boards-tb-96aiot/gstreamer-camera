@@ -27,6 +27,21 @@
 #define VALID_FR_EXP_T_INDEX  0
 #define VALID_FR_EXP_G_INDEX  1
 
+#define SENSOR_CONFIG_NUM   4
+#define SENSOR_READ_MODE    0
+#define SENSOR_WRITE_MODE   1
+
+#define CSI2_DT_YUV420_8b	(0x18)
+#define CSI2_DT_YUV420_10b	(0x19)
+#define CSI2_DT_YUV422_8b	(0x1E)
+#define CSI2_DT_YUV422_10b	(0x1F)
+#define CSI2_DT_RGB565	(0x22)
+#define CSI2_DT_RGB666	(0x23)
+#define CSI2_DT_RGB888	(0x24)
+#define CSI2_DT_RAW8	(0x2A)
+#define CSI2_DT_RAW10	(0x2B)
+#define CSI2_DT_RAW12	(0x2C)
+
 /* Sensor resolution specific data for AE calculation.*/
 struct isp_supplemental_sensor_mode_data {
   unsigned int coarse_integration_time_min;
@@ -70,6 +85,26 @@ struct camera_module_info_s {
   bool iq_flip;
   int flash_support;
   int flash_exp_percent;
+  int af_support;
+};
+
+struct sensor_resolution_s {
+  unsigned short width;
+  unsigned short height;
+};
+
+struct sensor_config_info_s {
+  unsigned char config_num;
+  unsigned char sensor_fmt[SENSOR_CONFIG_NUM];
+  struct sensor_resolution_s reso[SENSOR_CONFIG_NUM];
+};
+
+struct sensor_reg_rw_s {
+  unsigned char reg_access_mode;
+  unsigned char reg_addr_len;
+  unsigned char reg_data_len;
+  unsigned short addr;
+  unsigned short data;
 };
 
 struct flash_timeinfo_s {

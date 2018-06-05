@@ -471,6 +471,23 @@ typedef char                        CamEcmSchemeName_t[CAM_ECM_SCHEME_NAME];
 #define CAM_ECM_PROFILE_NAME        ( 20U )
 typedef char                        CamEcmProfileName_t[CAM_ECM_PROFILE_NAME];
 
+/*****************************************************************************/
+/**
+ * @brief   name/identifier of an exposure scheme (EcmScheme)
+ */
+/*****************************************************************************/
+#define CAM_DYNAMIC_SETPOINT_NAME         ( 20U )
+typedef char                        CamDynamicSetpointName_t[CAM_ECM_SCHEME_NAME];
+
+
+/*****************************************************************************/
+/**
+ * @brief   name/identifier of an exposure scheme (EcmScheme)
+ */
+/*****************************************************************************/
+#define CAM_EXP_SEPARATE_NAME         ( 20U )
+typedef char                        CamExpSeparateName_t[CAM_ECM_SCHEME_NAME];
+
 
 /*****************************************************************************/
 /**
@@ -1218,6 +1235,50 @@ typedef struct CamCalibAecGainRange_s{
 	float *pGainRange;
 }CamCalibAecGainRange_t;
 
+typedef struct CamCalibAecDynamicSetpoint_s{
+  void*                    p_next;                    /**< for adding to a list */
+  CamDynamicSetpointName_t      name;                       /**name */
+  uint8_t	enable;
+  float* pExpValue;
+  float* pDySetpoint;
+  int	array_size;
+}CamCalibAecDynamicSetpoint_t;
+
+
+typedef struct CamCalibAecExpSeparate_s{
+  void*                    p_next;                    /**< for adding to a list */
+  CamExpSeparateName_t      name;                       /**name */
+  Cam6x1FloatMatrix_t ecmTimeDot;
+  Cam6x1FloatMatrix_t ecmGainDot;
+}CamCalibAecExpSeparate_t;
+
+typedef struct CamCalibAecNLSC_s{
+	uint8_t enable;
+	float IR_rg;
+	float IR_bg;
+	float Max_dis;
+	uint8_t C2B_count;
+	float C2B_thresh;
+	uint8_t B2C_count;
+	float B2C_thresh;
+	float B2C_vb_percent;
+	uint8_t C2B_stable_fps;
+}CamCalibAecNLSC_t;
+
+typedef struct CamCalibAecBacklight_s{
+  uint8_t	enable;
+  float lumaHighTh;
+  float lumaLowTh;
+  float weightMinTh;
+  float weightMaxTh;
+}CamCalibAecBacklight_t;
+
+typedef struct CamCalibAecHist2Hal_s{
+  uint8_t	enable;
+  uint8_t   lowHistBinTh;
+}CamCalibAecHist2Hal_t;
+
+
 /*****************************************************************************/
 /**
  * @brief   Global AEC calibration structure
@@ -1237,6 +1298,7 @@ typedef struct CamCalibAecGlobal_s {
   float                   AfpsMaxIntTime;//cxf
   //float                 FrameRateVideo;
   Cam5x5UCharMatrix_t     GridWeights;//cxf
+  Cam5x5UCharMatrix_t     NightGridWeights;//cxf
   float                   MeasuringWinWidthScale;//cxf
   float                   MeasuringWinHeightScale;//cxf
   AecSemMode_t            SemMode; //cxf
@@ -1262,18 +1324,41 @@ typedef struct CamCalibAecGlobal_s {
   float         AOE_Step_Inc;
   float         AOE_Step_Dec;
   
-  uint8_t                 DON_Enable;
-  float         DON_Day2Night_Gain_th;
-  float         DON_Day2Night_Inttime_th;
-  float         DON_Day2Night_Luma_th;
-  float         DON_Night2Day_Gain_th;
-  float         DON_Night2Day_Inttime_th;
-  float         DON_Night2Day_Luma_th;
-  uint8_t                 DON_Bouncing_th;
+  uint8_t       DON_Night_Trigger;
+  uint8_t       DON_Night_Mode;
+  float         DON_Day2Night_Fac_th;
+  float         DON_Night2Day_Fac_th;
+  uint8_t       DON_Bouncing_th;
 
   CamCalibAecInterAdjust_t InterAdjustStrategy;
   
+  List DySetpointList;
+  List ExpSeparateList;
+  CamCalibAecNLSC_t NLSC_config;
+  CamCalibAecBacklight_t backLightConf;
+  CamCalibAecHist2Hal_t hist2Hal;
+
 } CamCalibAecGlobal_t;
+
+typedef struct CamCalibContrastAf_s {
+  uint8_t enable;  
+} CamCalibContrastAf_t;
+
+typedef struct CamCalibLaserAf_s {
+  uint8_t enable;
+  float vcmDot[7];
+  float distanceDot[7];
+} CamCalibLaserAf_t;
+
+typedef struct CamCalibPdaf_s {
+  uint8_t enable;  
+} CamCalibPdaf_t;
+
+typedef struct CamCalibAfGlobal_s {
+  CamCalibContrastAf_t contrast_af;
+  CamCalibLaserAf_t laser_af;
+  CamCalibPdaf_t pdaf;
+} CamCalibAfGlobal_t;
 
 typedef struct CamCalibGocProfile_s {
   void*                    p_next;  
@@ -1358,6 +1443,20 @@ enum LIGHT_MODE {
 	LIGHT_MODE_DAY = 0,
 	LIGHT_MODE_NIGHT = 1,
 	LIGHT_MODE_MAX = 2,
+};
+
+enum NIGHT_TRIGGER_MODE
+{
+    TRIGGER_OFF = 0,
+    LIGHT_SENS = 1,
+    NO_LIGHT_SENS = 2,
+    NO_LIGHT_SENS_IRCUT = 3,
+};
+
+enum NIGHT_MODE
+{
+    NORMAL = 1,
+    WHITE_BLACK = 2  
 };
 
 

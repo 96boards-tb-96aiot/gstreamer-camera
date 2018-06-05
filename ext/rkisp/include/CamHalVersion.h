@@ -160,5 +160,82 @@ v1.f.7.0
   2. modify code & para in IQ xml to get right filter
 v1.f.8.0
   1. fix high cpu usage error
+v1.f.9.0
+  1. AEC: add dynamic setpoint setting cell in IQ
+     add exposure separate setting cell in IQ
+  2. ADPF: fix error
+v1.f.a.0
+  1. support Night_Trigger and Night_Mode
+  2. support for frame dump support continuous frame dump
+  3. speedup stream on,off
+v1.f.b.0
+  1. HAL: fix unprocessed buffers of PU have not been returned to owner.
+  2. set Default night_Trigger as off
+v1.f.c.0
+  1. fix wrong calibdb version fo last commit
+v1.f.d.0
+  1. fix wrong 3a libs, that cause app crash
+v1.f.e.0
+  1. revert patch 'HAL: speedup stream on,off', isp driver not match now.
+v1.f.f.0
+  1. Fix the error of setting ae bias in USB camera.
+  2. AEC: fix night mode error which use wrong parameter for color mode.
+  3. NLSC: IRcut switch by ae awb with no-light sens chips.
+  4. Fix memory leak of CameraHal calidb.
+  5. Add api for SetPoint, Window, GridWeight of AE.
+     Fix the issue that cproc setting in IQ xml cann't take effect.
+  6. Fix the error of setting ae bias in ISP camera.
+  7. Remove an error log of awb.
+v2.0.0.0
+  1. Add DEBUG_LOG for redirectOut() in normal route.
+     Decrease the IQ xml loading time.
+  2. Add night mode on/off function.
+  3. Change 3A referance window.
+  4. Support get AE meanluma api.
+       get AE maxGainRange api.
+       set AE maxtime api but limit by maxTimeDot in IQ xml.
+       set AE maxGain api but limit by maxGainRange in IQ xml.
+  5. Force ae recalculate after change flicker mode.
+  6. Fix ae blinking issue when using setFps.
+  7. Dumpsys support setting 0.1ms exposure time.
+  8. Add api for force switching day and night mode.
+v2.0.1.0
+  1. Change CalibDB to V0.1.6.
+     Add back-light paras in IQ xml.
+     Add over bin hist statistics paras in IQ xml.
+  2. Add OV4689_M12-4IR.xml for FuFu project.
+v2.0.2.0
+  1. Add AF function.
+  2. Add s5k4h8_LA6110PA.xml for BBK project.
+v2.0.3.0
+  Fix af issues:
+  1. lens position haven't been set in initialization;
+  2. luminance that af stats must be calculated by lshift;
+  3. threadhold initalizate 4;
+  4. fix time calculation(frame start/end, vcm start/end); 
+  5. trigger af by AfSharpnessRawLogChk in af tracking;
+  6. check maxsharpness and dSharpness for af search result;
+v2.0.4.0
+  1. Add wdr/3dnr/sharpness api.
+  2. Support manual ae.
+  3. Add getFlip api.
+  4. Add lsc table and gamma in meta data.
+  5. Calibdb: Change the version from v0.1.6 to v0.1.7
+     ALL XML:
+      AEC -> NLSC_Config -> Enable: change the type from "char" to "double"
+      AEC -> BackLight_Config -> Enable: change the type from "char" to "double"
+      AEC -> Hist_2_hal -> Enable: change the type from "char" to "double"
+      fix the "t bug
+      Header -> code_xml_parse_version: change the version from v0.1.6 to v0.1.7
+v2.0.5.0
+  1. Add laser AF.
+v2.0.6.0
+  1. Update laser AF function.
+  2. Fix the issue that wdr disabled can not take effect
+     when reboot camerahal after changing iq xml.
+  3. Add 3a convergence api and 3a lock api.
+  4. Don't start ISP control function when use yuv soc camera.
+  5. IQ: add attribute to AEC->NLSC_Config, AEC->BackLight_Config, AEC->Hist_2_hal.
+  6. Fix the issue that can not get right illumination name "A" from xml file.
 ***********************************************/
-#define CAMHALVERSION "1.f.8.0"
+#define CAMHALVERSION "2.0.6.0"

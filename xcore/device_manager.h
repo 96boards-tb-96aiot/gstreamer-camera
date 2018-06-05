@@ -151,14 +151,15 @@ protected:
 	char _iq_file[512];
     void* _rkisp_engine;
 
-	typedef int (*rkisp_start_func)(void* &engine, int vidFd, const char* ispNode, const char* tuningFile);
-	typedef int (*rkisp_stop_func)(void* &engine);
-	struct RKIspFunc {
-		void* rkisp_handle;
-		rkisp_start_func start_func;
-		rkisp_stop_func stop_func;
-	};
-	struct RKIspFunc _RKIspFunc;
+    typedef int (*rkisp_start_func)(void* &engine, int vidFd, const char* ispNode, const char* tuningFile);
+    typedef int (*rkisp_stop_func)(void* &engine);
+    struct RKIspFunc {
+        void* rkengine_handle;
+        void* rkisp_handle;
+        rkisp_start_func start_func;
+        rkisp_stop_func stop_func;
+    };
+    struct RKIspFunc _RKIspFunc;
 };
 
 };

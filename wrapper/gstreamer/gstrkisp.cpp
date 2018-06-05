@@ -53,7 +53,7 @@ using namespace GstXCam;
 
 #if HAVE_RK_IQ
 #define DEFAULT_IQ_FILE_NAME  "/etc/cam_iq.xml"
-#define DEFAULT_DYNAMIC_3A_LIB "/usr/local/lib/librkisp.so"
+#define DEFAULT_DYNAMIC_3A_LIB "/usr/local/lib/libcam_ia.so"
 #endif
 
 #define V4L2_CAPTURE_MODE_STILL 0x2000

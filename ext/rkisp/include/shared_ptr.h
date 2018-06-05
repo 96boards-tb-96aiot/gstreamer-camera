@@ -31,7 +31,7 @@
 // from google3/util/gtl/shared_ptr.h
 #ifndef GOOGLE_PROTOBUF_STUBS_SHARED_PTR_H__
 #define GOOGLE_PROTOBUF_STUBS_SHARED_PTR_H__
-#include "../HAL/include/camHalTrace.h"
+#include "cam_ia_api/cam_ia10_trace.h"
 #include <algorithm>  // for swap
 #include <stddef.h>
 #include <memory>

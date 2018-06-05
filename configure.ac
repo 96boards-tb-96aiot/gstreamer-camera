@@ -79,6 +79,11 @@ AC_ARG_ENABLE(rkiq,
                    [enable librkisp library, @<:@default=yes@:>@]),
     [], [enable_rkiq="yes"])
 
+AC_ARG_ENABLE(rklib64,
+    AS_HELP_STRING([--enable-rklib64],
+                   [enable build rk 64 bit library, @<:@default=no@:>@]),
+    [], [enable_rklib64="no"])
+
 # documentation
 AC_ARG_ENABLE(docs,
     [AC_HELP_STRING([--enable-docs],
@@ -189,8 +194,12 @@ fi
 ENABLE_RK_IQ=0
 if test "$enable_rkiq" = "yes"; then
 	ENABLE_RK_IQ=1
-	RKISP_CFLAGS="-I\$(top_srcdir)/ext/rkisp/include"
-	RKISP_LIBS="-L\$(top_srcdir)/ext/rkisp/lib -lrkisp"
+	RKISP_CFLAGS="-I\$(top_srcdir)/ext/rkisp/include -I\$(top_srcdir)/ext/rkisp/usr/include/drm -I\$(top_srcdir)/ext/rkisp/usr/include"
+	if test "$enable_rklib64" = "yes"; then
+		RKISP_LIBS="-L\$(top_srcdir)/ext/rkisp/lib64 -L\$(top_srcdir)/ext/rkisp/usr/lib64 -lcam_engine_cifisp -lcam_ia"
+	else
+		RKISP_LIBS="-L\$(top_srcdir)/ext/rkisp/lib -L\$(top_srcdir)/ext/rkisp/usr/lib -lcam_engine_cifisp -lcam_ia"
+	fi
 	AC_SUBST(RKISP_CFLAGS)
     AC_SUBST(RKISP_LIBS)
     LIBS="$LIBS $RKISP_LIBS"
@@ -242,8 +251,12 @@ if test "$enable_aiq" = "yes"; then
         IA_IMAGING_CFLAGS="$IA_AIQ_CFLAGS"
         IA_IMAGING_LIBS="$IA_AIQ_LIBS"
     else
-        IA_IMAGING_CFLAGS="-I\$(top_srcdir)/ext/rkisp/include"
-        IA_IMAGING_LIBS="-L\$(top_srcdir)/ext/rkisp/lib -lrkisp"
+        IA_IMAGING_CFLAGS="-I\$(top_srcdir)/ext/rkisp/include -I\$(top_srcdir)/ext/rkisp/usr/include/drm -I\$(top_srcdir)/ext/rkisp/usr/include"
+	if test "$enable_rklib64" = "yes"; then
+        	IA_IMAGING_LIBS="-L\$(top_srcdir)/ext/rkisp/lib64 -L\$(top_srcdir)/ext/rkisp/usr/lib64 -lcam_ia -lcam_engine_cifisp"
+	else
+		IA_IMAGING_LIBS="-L\$(top_srcdir)/ext/rkisp/lib -L\$(top_srcdir)/ext/rkisp/usr/lib -lcam_ia -lcam_engine_cifisp"
+	fi
     fi
     AC_SUBST(IA_IMAGING_CFLAGS)
     AC_SUBST(IA_IMAGING_LIBS)
@@ -398,5 +411,6 @@ echo "
      enable smart analysis lib  : $enable_smartlib
      enable dvs                 : $enable_dvs
      enable libxcam-capi lib    : $enable_capi
-     enable rkisp lib    : $enable_rkiq
+     enable rkisp lib           : $enable_rkiq
+     enable build rk 64 bit lib : $enable_rklib64
 "

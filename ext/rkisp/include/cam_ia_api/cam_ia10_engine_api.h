@@ -83,16 +83,24 @@ struct CamIA10_DyCfg {
   HAL_IAMGE_EFFECT ie_mode;
   int aaa_locks;
   struct HAL_ColorProcCfg cproc;
+  struct HAL_WdrCfg wdr_cfg;
+  enum HAL_MODE_e dsp3dnr_mode;
+  struct HAL_3DnrLevelCfg dsp3dnr_level;
+  struct HAL_3DnrParamCfg dsp3dnr_param;
+  enum HAL_MODE_e flt_mode;
+  enum HAL_FLT_DENOISE_LEVEL_e flt_denoise;
+  enum HAL_FLT_SHARPENING_LEVEL_e flt_sharp;
   /*sensor data*/
   struct CamIA10_SensorModeData sensor_mode;
   enum LIGHT_MODE LightMode;
+  int len_pos;
 };
 
 struct CamIA10_Stats {
   unsigned int meas_type;
   AecStat_t aec;
   CamerIcAwbMeasuringResult_t awb;
-  CamerIcAfmMeasuringResult_t af;
+  AfMeas_t af;
 };
 
 typedef struct CamIA10_AWB_Result_s {
@@ -106,18 +114,15 @@ typedef struct CamIA10_AWB_Result_s {
   CamerIcAwbMeasuringConfig_t     MeasConfig;         /**< measuring config */
   Cam_Win_t           awbWin;
   uint8_t                 DoorType;
+  char IllName[20];  //yamasaki
   int err_code;
 } CamIA10_AWB_Result_t;
 
 typedef struct CamIA10_AFC_Result_s {
-  uint32_t mode;
-  uint32_t PixelCntA;
-  uint32_t PixelCntB;
-  uint32_t PixelCntC;
-
+  int32_t  LensePos;
   uint32_t Thres;
   uint32_t VarShift;
-  
+
   uint32_t  Window_Num;
   struct Cam_Win WindowA;
   struct Cam_Win WindowB;
@@ -195,6 +200,11 @@ class CamIA10EngineItf {
       int sensorInttime,
       float& halGain,
       float& halInttime) = 0;
+  virtual void mapHalExpToSensor(
+      float hal_gain,
+      float hal_time,
+      int& sensor_gain,
+      int& sensor_time) = 0;
 
   virtual void mapHalWinToIsp(
     uint16_t in_width, uint16_t in_height,
@@ -202,6 +212,9 @@ class CamIA10EngineItf {
     uint16_t drvWidth, uint16_t drvHeight,
     uint16_t& out_width, uint16_t& out_height,
     uint16_t& out_hOff, uint16_t& out_vOff) = 0;
+
+  virtual RESULT getWdrConfig(struct HAL_ISP_wdr_cfg_s* wdr_cfg, enum HAL_ISP_WDR_MODE_e wdr_mode) = 0;
+
 };
 
 shared_ptr<CamIA10EngineItf> getCamIA10EngineItf(void);

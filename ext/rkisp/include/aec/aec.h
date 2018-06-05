@@ -40,6 +40,7 @@
 #include <common/return_codes.h>
 #include <common/misc.h>
 #include <common/cam_types.h>
+#include "awb/awb.h"
 
 #ifdef __cplusplus
 extern "C"
@@ -110,9 +111,7 @@ typedef enum AecEcmFlickerPeriod_e {
 
 
 typedef struct Aec_daynight_th_s {
-  float         gain_th;
-  float         time_th;
-  float         luma_th;
+  float         fac_th;
   uint8_t         holdon_times_th;
 } Aec_daynight_th_t;
 
@@ -135,6 +134,7 @@ typedef struct AecInterAdjust_s{
 typedef struct AecConfig_s {
 
   Cam5x5UCharMatrix_t         GridWeights;
+  Cam5x5UCharMatrix_t         NightGridWeights;
   CamerIcIspHistMode_t  HistMode;
   AecMeasuringMode_t    meas_mode;
 
@@ -158,6 +158,7 @@ typedef struct AecConfig_s {
   float                           LinePeriodsPerField;
   float                           PixelClockFreqMHZ;
   float                           PixelPeriodsPerLine;
+  float                           ApiSetFps;
   /* gain range */
   uint32_t				  GainRange_size;
   float               *pGainRange;  
@@ -171,16 +172,24 @@ typedef struct AecConfig_s {
   float         AOE_Step_Inc;
   float         AOE_Step_Dec;
 
-  uint8_t         DON_Enable;
-  float         DON_Day2Night_Gain_th;
-  float         DON_Day2Night_Inttime_th;
-  float         DON_Day2Night_Luma_th;
-  float         DON_Night2Day_Gain_th;
-  float         DON_Night2Day_Inttime_th;
-  float         DON_Night2Day_Luma_th;
-  uint8_t         DON_Bouncing_th;
+  uint8_t       DON_Night_Trigger;
+  uint8_t       DON_Night_Mode;
+  float         DON_Day2Night_Fac_th; // yamasaki
+  float         DON_Night2Day_Fac_th; // yamasaki
+  uint8_t       DON_Bouncing_th;
 
   AecInterAdjust_t IntervalAdjStgy;
+
+  CamCalibAecExpSeparate_t *pExpSeparate[LIGHT_MODE_MAX];
+  CamCalibAecDynamicSetpoint_t *pDySetpoint[LIGHT_MODE_MAX];
+  CamCalibAecNLSC_t NLSC_config;
+  CamCalibAecBacklight_t backLightConf;
+  CamCalibAecHist2Hal_t hist2Hal;
+  enum LIGHT_MODE LightMode;
+  
+  int ae_bias;
+  float ApiSetMaxExpTime;
+  float ApiSetMaxGain;
 } AecConfig_t;
 
 /*****************************************************************************/
@@ -214,6 +223,7 @@ typedef struct AecResult_s {
   int regGain;
   float PixelClockFreqMHZ;
   float PixelPeriodsPerLine;
+  float LinePeriodsPerField;
 
   AecMeasuringMode_t meas_mode;
   struct Cam_Win meas_win;
@@ -224,8 +234,19 @@ typedef struct AecResult_s {
   float gainFactor;
   float gainBias;
   bool_t aoe_enable;
-  bool_t night;
   bool auto_adjust_fps;
+  enum LIGHT_MODE DON_LightMode;
+  float DON_Fac;
+  float MeanLuma;
+  float MaxGainRange;
+  uint8_t Night_Trigger;
+  uint8_t Night_Mode;
+  float overHistPercent;
+
+  float MinGain;
+  float MaxGain;
+  float MinIntegrationTime;
+  float MaxIntegrationTime;
 } AecResult_t;
 
 /*****************************************************************************/
@@ -273,6 +294,7 @@ RESULT AecStop
 RESULT AecRun
 (
     AecStat_t* ae_stat,
+	AwbMeasuringResult_t *pAwbMesureResult,
     AecResult_t* AecResult
 );
 

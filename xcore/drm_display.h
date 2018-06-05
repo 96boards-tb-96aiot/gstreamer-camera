@@ -27,10 +27,13 @@
 #include "v4l2_buffer_proxy.h"
 
 extern "C" {
+#define virtual vir
+
 #include <drm.h>
 #include <drm_mode.h>
 #include <rk_intel_bufmgr.h>
 #include <linux/videodev2.h>
+#undef virtual
 }
 
 #include <errno.h>

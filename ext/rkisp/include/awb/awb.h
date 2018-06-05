@@ -202,6 +202,7 @@ typedef struct AwbRunningOutputResult_s {
   Cam_Win_t           awbWin;
   uint8_t                 DoorType;
   int err_code;
+  char IllName[20]; //yamasaki
 } AwbRunningOutputResult_t;
 
 

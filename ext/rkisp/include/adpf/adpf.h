@@ -197,6 +197,7 @@ typedef struct AdpfConfig_s {
   } data;
 
   CamerIcDpfInvStrength_t dynInvStrength;
+  enum LIGHT_MODE LightMode;
 
 } AdpfConfig_t;
 

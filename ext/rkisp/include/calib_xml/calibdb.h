@@ -97,11 +97,17 @@ class CalibDb {
   bool parseEntryAwbIllumination(const XMLElement*, void* param = NULL);
   bool parseEntryAwbIlluminationAlsc(const XMLElement*, void* param = NULL);
   bool parseEntryAwbIlluminationAcc(const XMLElement*, void* param = NULL);
-
+  //parse Sensor-AF
+  bool parseEntryContrastAf( const XMLElement*, void *param = NULL );
+  bool parseEntryLaserAf( const XMLElement*, void *param = NULL );
+  bool parseEntryPdaf( const XMLElement*, void *param = NULL );
+  bool parseEntryAf( const XMLElement*, void *param = NULL );
   // parse Sensor-AEC
   bool parseEntryAec(const XMLElement*, void* param = NULL);
   bool parseEntryAecEcm(const XMLElement*, void* param = NULL);
   bool parseEntryAecEcmPriorityScheme(const XMLElement*, void* param = NULL);
+  bool parseAECDySetpoint(const XMLElement*, void* param = NULL);
+  bool parseAECExpSeparate(const XMLElement*, void* param = NULL);
 
   // parse Sensor-LSC
   bool parseEntryLsc(const XMLElement*, void* param = NULL);

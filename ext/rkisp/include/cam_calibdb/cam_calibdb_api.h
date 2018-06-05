@@ -47,6 +47,28 @@ typedef struct CamCalibDbContext_s* CamCalibDbHandle_t;
 
 /*****************************************************************************/
 /**
+ * @brief   This function clears AEC set point list.
+ *
+ * @param   l         Head to set point list.
+ *
+ * @return  void
+ *
+ *****************************************************************************/
+void ClearDySetpointList(List* l);
+
+/*****************************************************************************/
+/**
+ * @brief   This function clears AEC exposure separate list.
+ *
+ * @param   l         Head to exposure separate list.
+ *
+ * @return  void
+ *
+ *****************************************************************************/
+void ClearExpSeparateList(List* l);
+
+/*****************************************************************************/
+/**
  * @brief   The function creates and initializes a CamCalibDb instance.
  *
  * @param   pConfig             Instance configuration structure.
@@ -351,6 +373,45 @@ RESULT CamCalibDbGetAwbGlobalByResolution
     CamCalibAwbGlobal_t**         pAwbGlobal
 );
 
+/*****************************************************************************/
+/**
+ * @brief   This function adds the global AF configuration to the CamCalibDb instance.
+ *
+ * @param   hCamCalibDb         Handle to the CamCalibDb instance.
+ * @param   pAddAfGlobal       Reference of AF global configuration to add
+ *
+ * @return  Return the result of the function call.
+ * @retval  RET_SUCCESS         function succeed
+ * @retval  RET_WRONG_HANDLE    invalid instance handle
+ * @retval  RET_INVALID_PARM    invalid parameter
+ *
+ *****************************************************************************/
+RESULT CamCalibDbAddAfGlobal
+(
+    CamCalibDbHandle_t      hCamCalibDb,
+    CamCalibAfGlobal_t*     pAddAfGlobal
+);
+
+
+
+/*****************************************************************************/
+/**
+ * @brief   This function returns the global AF configuration from the CamCalibDb instance.
+ *
+ * @param   hCamCalibDb         Handle to the CamCalibDb instance.
+ * @param   ppAfGlobal         Reference of pointer to AF global configuration
+ *
+ * @return  Return the result of the function call.
+ * @retval  RET_SUCCESS         function succeed
+ * @retval  RET_WRONG_HANDLE    invalid instance handle
+ * @retval  RET_INVALID_PARM    invalid parameter
+ *
+ *****************************************************************************/
+RESULT CamCalibDbGetAfGlobal
+(
+    CamCalibDbHandle_t      hCamCalibDb,
+    CamCalibAfGlobal_t**     ppAfGlobal
+);
 
 
 /*****************************************************************************/
@@ -646,6 +707,65 @@ RESULT CamCalibDbGetNoOfIlluminations
 );
 
 
+RESULT CamCalibDbAddDySetpoint
+(
+    CamCalibDbHandle_t      hCamCalibDb,
+    CamCalibAecGlobal_t* pAecGlobal,
+    CamCalibAecDynamicSetpoint_t* pAddDySetpoint
+);
+
+RESULT CamCalibDbGetNoOfDySetpoint
+(
+    CamCalibDbHandle_t      hCamCalibDb,
+    CamCalibAecGlobal_t*         pAecGlobal,
+    int32_t*                 no
+);
+
+RESULT CamCalibDbGetDySetpointByName
+(
+    CamCalibDbHandle_t      hCamCalibDb,
+    CamCalibAecGlobal_t*         pAecGlobal,
+    CamDynamicSetpointName_t      DySetpointName,
+    CamCalibAecDynamicSetpoint_t**          ppDySetpoint
+);
+
+RESULT CamCalibDbGetDySetpointByIdx
+(
+    CamCalibDbHandle_t      hCamCalibDb,
+    CamCalibAecGlobal_t*         pAecGlobal,
+    const uint32_t          idx,
+    CamCalibAecDynamicSetpoint_t**          ppDySetpoint
+);
+
+RESULT CamCalibDbAddExpSeparate
+(
+    CamCalibDbHandle_t      hCamCalibDb,
+    CamCalibAecGlobal_t* pAecGlobal,
+    CamCalibAecExpSeparate_t* pAddExpSeparate
+);
+
+RESULT CamCalibDbGetNoOfExpSeparate
+(
+    CamCalibDbHandle_t      hCamCalibDb,
+    CamCalibAecGlobal_t*         pAecGlobal,
+    int32_t*                 no
+);
+
+RESULT CamCalibDbGetExpSeparateByName
+(
+    CamCalibDbHandle_t      hCamCalibDb,
+    CamCalibAecGlobal_t*         pAecGlobal,
+    CamExpSeparateName_t      ExpSeparateName,
+    CamCalibAecExpSeparate_t**          ppExpSeparate
+);
+
+RESULT CamCalibDbGetExpSeparateByIdx
+(
+    CamCalibDbHandle_t      hCamCalibDb,
+    CamCalibAecGlobal_t*         pAecGlobal,
+    const uint32_t          idx,
+    CamCalibAecExpSeparate_t**          ppExpSeparate
+);
 
 /*****************************************************************************/
 /**
