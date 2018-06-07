@@ -47,8 +47,15 @@ X3aAnalyzer::create_handlers ()
     SmartPtr<CommonHandler> common_handler;
 
     if (_ae_handler.ptr() && _awb_handler.ptr() &&
-            _af_handler.ptr() && _common_handler.ptr())
+            _af_handler.ptr() && _common_handler.ptr()) {
+        if (_rkisp_engine) {
+            _ae_handler->set_rkisp_engine(_rkisp_engine);
+            _awb_handler->set_rkisp_engine(_rkisp_engine);
+            _af_handler->set_rkisp_engine(_rkisp_engine);
+            _common_handler->set_rkisp_engine(_rkisp_engine);
+        }
         return XCAM_RETURN_NO_ERROR;
+    }
 
     ae_handler = create_ae_handler ();
     awb_handler = create_awb_handler ();
@@ -65,6 +72,12 @@ X3aAnalyzer::create_handlers ()
     _af_handler = af_handler;
     _common_handler = common_handler;
 
+    if (_rkisp_engine) {
+        _ae_handler->set_rkisp_engine(_rkisp_engine);
+        _awb_handler->set_rkisp_engine(_rkisp_engine);
+        _af_handler->set_rkisp_engine(_rkisp_engine);
+        _common_handler->set_rkisp_engine(_rkisp_engine);
+    }
     return XCAM_RETURN_NO_ERROR;
 }
 

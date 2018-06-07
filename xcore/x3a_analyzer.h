@@ -104,6 +104,10 @@ public:
         return _common_handler;
     }
 
+    void set_rkisp_engine (void* rkisp_engine) {
+        _rkisp_engine = rkisp_engine;
+    }
+
 protected:
     /* virtual function list */
     virtual XCamReturn create_handlers ();
@@ -132,6 +136,7 @@ private:
 
 protected:
     double                   _brightness_level_param;
+    void*                    _rkisp_engine;
 
 private:
     SmartPtr<AeHandler>      _ae_handler;

@@ -181,10 +181,10 @@ struct _GstXCam3AInterface {
      * see xcam_3a_set_ae_flicker_mode().
      *
      * \param[in,out]    xcam        XCam handle
-     * \param[in]        flicker     XCAM_AE_FLICKER_MODE_AUTO, default
+     * \param[in]        flicker     XCAM_AE_FLICKER_MODE_OFF, outside
      *                               XCAM_AE_FLICKER_MODE_50HZ
      *                               XCAM_AE_FLICKER_MODE_60HZ
-     *                               XCAM_AE_FLICKER_MODE_OFF, outside
+     *                               XCAM_AE_FLICKER_MODE_AUTO, default
      */
     gboolean (*set_exposure_flicker_mode)       (GstXCam3A *xcam, XCamFlickerMode flicker);
 
@@ -272,7 +272,7 @@ struct _GstXCam3AInterface {
      * \brief set AE time range
      *
      * \param[in,out]    xcam            XCam3A handle
-     * \param[in]        min_time_in_us  min time
+     * \param[in]        min_time_in_us  min time, useless
      * \param[in]        max_time_in_us  max time
      * \return           XCam3AStatus    0 on success
      */
@@ -283,7 +283,7 @@ struct _GstXCam3AInterface {
      * Range in [0 ~ 1000000/fps] micro-seconds. see xcam_3a_set_ae_time_range().
      *
      * \param[in,out]    xcam            XCam3A handle
-     * \param[out]       min_time_in_us  min time
+     * \param[out]       min_time_in_us  min time, useless
      * \param[out]       max_time_in_us  max time
      * \return           bool            0 on success
      */

@@ -208,7 +208,7 @@ DeviceManager::start ()
         XCAM_LOG_INFO ("device manager start, capture dev fd: %d\n", _device->get_fd());
         _RKIspFunc.start_func(_rkisp_engine, _device->get_fd(), ispDevice, _iq_file);
         //rkisp_start(_rkisp_engine, _device->get_fd(), "/dev/video1", _iq_file);
-        XCAM_LOG_INFO ("device manager isp_init\n");
+        XCAM_LOG_INFO ("device manager isp_init _rkisp_engine:%p\n", _rkisp_engine);
 
         if (_rkisp_engine == NULL) {
             XCAM_LOG_INFO ("rkisp_init engine failed\n");
@@ -254,6 +254,9 @@ DeviceManager::start ()
             if (!_3a_analyzer.ptr()) {
                 XCAM_FAILED_STOP (ret = XCAM_RETURN_ERROR_PARAM, "create analyzer failed");
             }
+        }
+        if (_rkisp_engine) {
+            _3a_analyzer->set_rkisp_engine(_rkisp_engine);
         }
         if (_3a_analyzer->prepare_handlers () != XCAM_RETURN_NO_ERROR) {
             XCAM_FAILED_STOP (ret = XCAM_RETURN_ERROR_PARAM, "prepare analyzer handler failed");

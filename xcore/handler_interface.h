@@ -38,7 +38,9 @@ public:
     virtual ~AnalyzerHandler () {}
 
     virtual XCamReturn analyze (X3aResultList &output) = 0;
-
+    void set_rkisp_engine (void* rkisp_engine) {
+        _rkisp_engine = rkisp_engine;
+    }
 protected:
     class HandlerLock
         : public SmartLock
@@ -52,6 +54,7 @@ protected:
 
     // members
     Mutex _mutex;
+    void* _rkisp_engine;
 };
 
 class AeHandler

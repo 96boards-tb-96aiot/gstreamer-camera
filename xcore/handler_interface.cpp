@@ -19,6 +19,7 @@
  */
 
 #include "handler_interface.h"
+#include <rkisp_interface.h>
 
 namespace XCam {
 
@@ -37,7 +38,7 @@ AeHandler::reset_parameters ()
     _params.metering_mode = XCAM_AE_METERING_MODE_AUTO;
     _params.flicker_mode = XCAM_AE_FLICKER_MODE_AUTO;
     _params.speed = 1.0;
-    _params.exposure_time_min = UINT64_C(0);
+    _params.exposure_time_min = UINT64_C(10);
     _params.exposure_time_max = UINT64_C(0);
     _params.max_analog_gain = 0.0;
     _params.manual_exposure_time = UINT64_C (0);
@@ -57,11 +58,21 @@ AeHandler::reset_parameters ()
 bool
 AeHandler::set_mode (XCamAeMode mode)
 {
+    if (!_rkisp_engine) {
+        XCAM_LOG_ERROR ("rkisp_engine is NULL");
+        return -1;
+    }
     AnalyzerHandler::HandlerLock lock(this);
     _params.mode = mode;
 
-    XCAM_LOG_DEBUG ("ae set mode [%d]", mode);
-    return true;
+    XCAM_LOG_INFO ("ae set mode [%d] rkisp_engine:%p", mode, _rkisp_engine);
+    if (mode == XCAM_AE_MODE_AUTO || mode == XCAM_AE_MODE_MANUAL) {
+        _params.mode = mode;
+        return rkisp_setAeMode (_rkisp_engine, (HAL_AE_OPERATION_MODE)mode);
+    } else {
+        XCAM_LOG_WARNING ("ae set mode [%d] isn't supported", mode);
+        return -1;
+    }
 }
 
 bool
@@ -156,11 +167,15 @@ AeHandler::set_speed (double speed)
 bool
 AeHandler::set_flicker_mode (XCamFlickerMode flicker)
 {
+    if (!_rkisp_engine) {
+        XCAM_LOG_ERROR ("rkisp_engine is NULL");
+        return -1;
+    }
     AnalyzerHandler::HandlerLock lock(this);
     _params.flicker_mode = flicker;
 
     XCAM_LOG_DEBUG ("ae set flicker:%d", flicker);
-    return true;
+    return rkisp_setAntiBandMode(_rkisp_engine, (HAL_AE_FLK_MODE)flicker);
 }
 
 XCamFlickerMode
@@ -173,39 +188,65 @@ AeHandler::get_flicker_mode ()
 int64_t
 AeHandler::get_current_exposure_time ()
 {
+    float time = 0;
+    if (!_rkisp_engine) {
+        XCAM_LOG_ERROR ("rkisp_engine is NULL");
+        return -1;
+    }
     AnalyzerHandler::HandlerLock lock(this);
-    if (_params.mode == XCAM_AE_MODE_MANUAL)
-        return _params.manual_exposure_time;
-    return INT64_C(-1);
+    rkisp_getAeTime(_rkisp_engine, time);
+    XCAM_LOG_INFO ("ae get current time:%.03f s", time);
+    return (int64_t)(time * 1000 * 1000);
 }
 
 double
 AeHandler::get_current_analog_gain ()
 {
+    float gain = 0;
+    if (!_rkisp_engine) {
+        XCAM_LOG_ERROR ("rkisp_engine is NULL");
+        return -1;
+    }
     AnalyzerHandler::HandlerLock lock(this);
-    if (_params.mode == XCAM_AE_MODE_MANUAL)
-        return _params.manual_analog_gain;
-    return 0.0;
+
+    rkisp_getAeGain(_rkisp_engine, gain);
+    XCAM_LOG_INFO ("ae get current gain:%.03f", gain);
+    return (double)gain;
 }
 
 bool
 AeHandler::set_manual_exposure_time (int64_t time_in_us)
 {
+    float time, gain;
+    if (!_rkisp_engine) {
+        XCAM_LOG_ERROR ("rkisp_engine is NULL");
+        return -1;
+    }
     AnalyzerHandler::HandlerLock lock(this);
     _params.manual_exposure_time = time_in_us;
+    time = (float)((double)time_in_us / 1000 / 1000);
+    rkisp_getAeGain(_rkisp_engine, gain);
+    if (gain < 1)
+        gain = 1;
 
-    XCAM_LOG_DEBUG ("ae set manual exposure time: %" PRId64 "us", time_in_us);
-    return true;
+    XCAM_LOG_INFO ("ae set manual exposure time: %" PRId64 "us, default gain:%.03f", time_in_us, gain);
+    
+    return rkisp_setManualGainAndTime(_rkisp_engine, gain, time);
 }
 
 bool
 AeHandler::set_manual_analog_gain (double gain)
 {
+    float time;
+    if (!_rkisp_engine) {
+        XCAM_LOG_ERROR ("rkisp_engine is NULL");
+        return -1;
+    }
     AnalyzerHandler::HandlerLock lock(this);
     _params.manual_analog_gain = gain;
-
-    XCAM_LOG_DEBUG ("ae set manual analog gain: %.03f", gain);
-    return true;
+    rkisp_getAeTime (_rkisp_engine, time);
+    XCAM_LOG_INFO ("ae set manual analog gain: %.03f, default time:%.03f", gain, time);
+    return rkisp_setManualGainAndTime(_rkisp_engine, (float)gain, time);
 }
 
 bool
@@ -221,27 +262,46 @@ AeHandler::set_aperture (double fn)
 bool
 AeHandler::set_max_analog_gain (double max_gain)
 {
+    if (!_rkisp_engine) {
+        XCAM_LOG_ERROR ("rkisp_engine is NULL");
+        return -1;
+    }
     AnalyzerHandler::HandlerLock lock(this);
+    if (max_gain < 1)
+        max_gain = 1;
     _params.max_analog_gain = max_gain;
 
-    XCAM_LOG_DEBUG ("ae set max analog_gain: %.03f", max_gain);
+    XCAM_LOG_INFO ("ae set max analog_gain: %.03f", max_gain);
+    return rkisp_setAeMaxExposureGain(_rkisp_engine, (float)max_gain);
     return true;
 }
 
 double AeHandler::get_max_analog_gain ()
 {
+    float gain = 0;
+    if (!_rkisp_engine) {
+        XCAM_LOG_ERROR ("rkisp_engine is NULL");
+        return -1;
+    }
     AnalyzerHandler::HandlerLock lock(this);
-    return _params.max_analog_gain;
+    rkisp_getAeMaxExposureGain(_rkisp_engine, gain);
+    XCAM_LOG_INFO ("ae get max analog_gain: %.03f", gain);
+    return (double)gain;
 }
 
 bool AeHandler::set_exposure_time_range (int64_t min_time_in_us, int64_t max_time_in_us)
 {
+    float time = 0;
+    if (!_rkisp_engine) {
+        XCAM_LOG_ERROR ("rkisp_engine is NULL");
+        return -1;
+    }
     AnalyzerHandler::HandlerLock lock(this);
     _params.exposure_time_min = min_time_in_us;
     _params.exposure_time_max = max_time_in_us;
-
-    XCAM_LOG_DEBUG ("ae set exposrue range[%" PRId64 "us, %" PRId64 "us]", min_time_in_us, max_time_in_us);
-    return true;
+    time = (float)((double)max_time_in_us / 1000 / 1000);
+    XCAM_LOG_INFO ("ae set exposrue range[%" PRId64 "us, %" PRId64 "us]", min_time_in_us, max_time_in_us);
+    return  rkisp_setAeMaxExposureTime(_rkisp_engine, time);
 }
 
 bool
@@ -258,12 +318,19 @@ AeHandler::update_parameters (const XCamAeParam &params)
 bool
 AeHandler::get_exposure_time_range (int64_t *min_time_in_us, int64_t *max_time_in_us)
 {
+    float time = 0;
+    if (!_rkisp_engine) {
+        XCAM_LOG_ERROR ("rkisp_engine is NULL");
+        return -1;
+    }
     XCAM_ASSERT (min_time_in_us && max_time_in_us);
 
     AnalyzerHandler::HandlerLock lock(this);
+    rkisp_getAeMaxExposureTime(_rkisp_engine, time);
+     _params.exposure_time_max = (int64_t)(time * 1000 * 1000);
     *min_time_in_us = _params.exposure_time_min;
     *max_time_in_us = _params.exposure_time_max;
-
+    XCAM_LOG_INFO ("ae get exposrue range[%" PRId64 "us, %" PRId64 "us]", *min_time_in_us, *max_time_in_us);
     return true;
 }
 

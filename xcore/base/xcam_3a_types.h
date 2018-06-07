@@ -96,10 +96,10 @@ typedef enum {
 } XCamIsoMode;
 
 typedef enum {
-    XCAM_AE_FLICKER_MODE_AUTO,
+    XCAM_AE_FLICKER_MODE_OFF = 0,
     XCAM_AE_FLICKER_MODE_50HZ,
     XCAM_AE_FLICKER_MODE_60HZ,
-    XCAM_AE_FLICKER_MODE_OFF
+    XCAM_AE_FLICKER_MODE_AUTO
 } XCamFlickerMode;
 
 #if 0
